@@ -201,6 +201,23 @@
   .ai-summary p{ font-size:12.5px; line-height:1.55; color:var(--white); }
   .ai-summary .ai-label{ font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); margin-bottom:3px; }
 
+  .ai-actions-row{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 20px 4px; }
+  .ai-actions-row .btn-secondary{ padding:7px 12px; font-size:12.5px; }
+  .ai-loading{ display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12.5px; padding:10px 2px; }
+  .ai-answer{ font-size:13px; line-height:1.6; color:var(--white); }
+  .ai-answer p{ font-size:12.5px; line-height:1.6; color:var(--muted); }
+  .ai-task-list{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .ai-task-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; }
+  .ai-task-title{ font-size:13px; font-weight:600; color:var(--white); }
+  .ai-task-meta{ font-size:11.5px; color:var(--muted-2); margin-top:2px; }
+  .ai-ask-row{ display:flex; gap:10px; }
+  .ai-ask-row input{ flex:1; border:1px solid var(--border); background:var(--panel-2); border-radius:9px; padding:11px 14px; font-size:14px; color:var(--white); outline:none; font-family:'Inter',sans-serif; }
+  .ai-ask-row input:focus{ border-color:var(--accent); }
+  .ai-suggestions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .ai-ask-result{ margin-top:18px; }
+  .ai-ask-result .ai-answer{ white-space:pre-line; }
+  #aiLeadInsight .ai-answer{ font-size:12.5px; }
+
   .search-dropdown{
     position:absolute; top:calc(100% + 8px); left:0; width:100%; background:var(--panel);
     border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 28px rgba(20,40,30,.1);
@@ -582,6 +599,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         Dashboard
       </button>
+      <button class="nav-item" data-view="ai" onclick="showView('ai')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.8 4.9L19 9.5l-4.9 1.8L12 16l-1.8-4.7L5 9.5l4.9-1.8L12 3z"/></svg>
+        AI Assistent
+      </button>
       <button class="nav-item" data-view="companies" onclick="showView('companies')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 8h6v13h-6M7 7h1M10 7h1M7 11h1M10 11h1M7 15h1M10 15h1"/></svg>
         Bedrijven <span class="nav-count" id="navCountCompanies">0</span>
@@ -764,6 +785,26 @@
       </div>
     </section>
 
+    <!-- ============ AI ASSISTENT ============ -->
+    <section id="view-ai" class="view">
+      <div class="page-head">
+        <div><div class="page-title">AI Assistent</div><div class="page-sub">Stel een vraag over je leads, contacten, deals en taken</div></div>
+      </div>
+      <div class="panel" style="padding:22px;">
+        <div class="ai-ask-row">
+          <input type="text" id="aiAskInput" placeholder="Bijv. Wat moet ik vandaag doen?" onkeydown="if(event.key==='Enter') runAIAsk();">
+          <button class="btn-primary" onclick="runAIAsk()">Vraag</button>
+        </div>
+        <div class="ai-suggestions" id="aiSuggestions">
+          <div class="filter-chip" onclick="runAIAsk('Wat moet ik vandaag doen?')">Wat moet ik vandaag doen?</div>
+          <div class="filter-chip" onclick="runAIAsk('Welke leads moet ik deze week opvolgen?')">Welke leads moet ik opvolgen?</div>
+          <div class="filter-chip" onclick="runAIAsk('Welke deals lopen risico om te verlopen?')">Welke deals lopen risico?</div>
+          <div class="filter-chip" onclick="runAIAsk('Geef een overzicht van mijn openstaande taken.')">Overzicht openstaande taken</div>
+        </div>
+        <div id="aiAskResult" class="ai-ask-result"></div>
+      </div>
+    </section>
+
     <!-- ============ COMPANIES ============ -->
     <section id="view-companies" class="view">
       <div class="page-head">
@@ -852,6 +893,16 @@
           <button class="btn-primary" onclick="showView('tasks')">+ Taak</button>
         </div>
       </div>
+      <div class="ai-summary">
+        <div class="ai-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.9L19 9.5l-4.9 1.8L12 16l-1.8-4.7L5 9.5l4.9-1.8L12 3z"/></svg></div>
+        <div><div class="ai-label">AI-samenvatting</div><p id="cdAiSummary">—</p></div>
+      </div>
+      <div class="ai-actions-row">
+        <button class="btn-secondary" onclick="openNextActionModal('contact', currentContactId)">✨ Volgende actie</button>
+        <button class="btn-secondary" onclick="openDraftMessageModal('contact', currentContactId, 'email')">✉ Concept e-mail</button>
+        <button class="btn-secondary" onclick="openSuggestTasksModal('contact', currentContactId)">＋ Taken voorstellen</button>
+        <button class="btn-secondary" onclick="openMeetingSummaryModal('contact', currentContactId)">🗒 Gesprek samenvatten</button>
+      </div>
       <div class="detail-grid">
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Tijdlijn &amp; notities</div></div>
@@ -938,6 +989,12 @@
       <div class="ai-summary">
         <div class="ai-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.9L19 9.5l-4.9 1.8L12 16l-1.8-4.7L5 9.5l4.9-1.8L12 3z"/></svg></div>
         <div><div class="ai-label">AI-samenvatting</div><p id="ddAiSummary">—</p></div>
+      </div>
+      <div class="ai-actions-row">
+        <button class="btn-secondary" onclick="openNextActionModal('deal', currentDealId)">✨ Volgende actie</button>
+        <button class="btn-secondary" onclick="openDraftMessageModal('deal', currentDealId, 'email')">✉ Concept e-mail</button>
+        <button class="btn-secondary" onclick="openSuggestTasksModal('deal', currentDealId)">＋ Taken voorstellen</button>
+        <button class="btn-secondary" onclick="openMeetingSummaryModal('deal', currentDealId)">🗒 Gesprek samenvatten</button>
       </div>
       <div class="detail-grid">
         <div class="panel">
@@ -1463,6 +1520,7 @@ const primaryActions = {
   tasks: {label:'+ Nieuwe taak', fn:()=>document.getElementById('newTaskInput').focus()},
   calendar: {label:'+ Afspraak', fn:()=>showToast('Afspraken plannen volgt binnenkort')},
   reports: {label:'Exporteren', fn:()=>exportReportsCSV()},
+  ai: {label:'Vraag stellen', fn:()=>document.getElementById('aiAskInput').focus()},
   team: {label:'+ Teamlid uitnodigen', fn:()=>inviteTeammate()},
   settings: {label:'Opslaan', fn:()=>showToast('Instellingen opgeslagen')},
   invoices: {label:'+ Nieuwe factuur', fn:()=>openFormModal('invoice')},
@@ -1761,6 +1819,17 @@ function buildLeadForm(editId){
       '<div><label>Status</label><select id="ldStatus">'+statusOptions+'</select></div>'+
       '<div><label>Score (0-100)</label><input type="text" id="ldScore" value="'+(rec?rec.score:'0')+'"></div>'+
     '</div>'+
+    (rec ? (
+      '<div class="field-row" style="border-top:1px solid var(--border-soft); padding-top:14px; margin-top:2px;">'+
+        '<label>AI</label>'+
+        '<div class="ai-actions-row" style="margin:0 0 4px;">'+
+          '<button type="button" class="btn-secondary" onclick="runLeadAISummary('+rec.id+')">✨ Samenvatting</button>'+
+          '<button type="button" class="btn-secondary" onclick="runLeadAIScore('+rec.id+')">🎯 Score inschatten</button>'+
+          '<button type="button" class="btn-secondary" onclick="runLeadAINextAction('+rec.id+')">➡ Volgende actie</button>'+
+        '</div>'+
+        '<div id="aiLeadInsight"></div>'+
+      '</div>'
+    ) : '')+
   '</div>'+
   '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteLead('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitLeadForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Lead toevoegen')+'</button></div>';
 }
@@ -1857,6 +1926,7 @@ async function openContact(id){
   renderContactDetailTasks();
 
   showView('contact-detail');
+  refreshContactAiSummary(id);
   document.getElementById('cdTimeline').innerHTML = await fetchEntityTimeline('contact', uuidFor('contacts', id));
 }
 function renderContactDetailTasks(){
@@ -1947,7 +2017,7 @@ async function openDeal(id){
   document.getElementById('ddCreated').textContent = d.createdAt || '—';
   document.getElementById('ddOwner').textContent = (currentProfile && currentProfile.full_name) || '—';
   document.getElementById('ddBron').textContent = '—';
-  document.getElementById('ddAiSummary').innerHTML = generateDealSummary(d, c);
+  refreshDealAiSummary();
 
   const sel = document.getElementById('ddStageSelect');
   sel.innerHTML = stages.map(s=>'<option value="'+s.id+'" '+(s.id===d.stage?'selected':'')+'>'+esc(s.name)+'</option>').join('');
@@ -2002,8 +2072,7 @@ async function changeDealStage(){
   if(error){ sel.value = d.stage; showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
   d.stage = newStageKey;
   renderKanban(); renderDealsList(); renderDashboard();
-  const c = contacts.find(x=>x.id===d.contactId);
-  document.getElementById('ddAiSummary').innerHTML = generateDealSummary(d, c);
+  refreshDealAiSummary();
   showToast('Fase bijgewerkt naar ' + stageInfo(d.stage).name);
 }
 function switchDealTab(tab){
@@ -2797,16 +2866,314 @@ function deleteContract(id){
   showView('contracts');
 }
 
-/* ================= AI DEAL SUMMARY ================= */
-function generateDealSummary(d, c){
-  const stageMsgs = {
-    contact: 'Nog vroeg in het traject bij <b>'+c.company+'</b> — kans op winnen is nu '+d.prob+'%. Plan een vervolgcontact om de behoefte te kwalificeren voordat je een voorstel stuurt.',
-    voorstel: 'Voorstel is verstuurd naar <b>'+c.company+'</b>, kans op winnen '+d.prob+'%. Is er binnen enkele dagen geen reactie, dan is een korte follow-up verstandig.',
-    onderhandeling: 'Deze deal zit in de laatste fase bij <b>'+c.company+'</b> — kans op winnen '+d.prob+'%. Sluitdatum staat op '+d.close+', houd de voortgang deze week goed in de gaten.',
-    gewonnen: 'Deze deal is gewonnen — mooi werk! Overweeg een vervolgvoorstel of upsell bij <b>'+c.company+'</b> nu de relatie warm is.',
-    verloren: 'Deze deal is als verloren gemarkeerd. Geen directe actie nodig, tenzij er signalen zijn van nieuwe interesse bij <b>'+c.company+'</b>.',
+/* ================= AI ASSISTANT ================= */
+async function callAI(action, params){
+  const { data: sessionData } = await sb.auth.getSession();
+  const session = sessionData && sessionData.session;
+  if(!session) throw new Error('Je bent niet (meer) ingelogd.');
+  let res;
+  try {
+    res = await fetch(SUPABASE_URL + '/functions/v1/ai-assistant', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action }, params))
+    });
+  } catch(networkErr){
+    throw new Error('Kan de AI-assistent niet bereiken. Controleer je internetverbinding.');
+  }
+  let payload = null;
+  try { payload = await res.json(); } catch(e){ /* no body */ }
+  if(!res.ok){
+    throw new Error((payload && payload.error) || 'AI-verzoek mislukt (status '+res.status+').');
+  }
+  return payload || {};
+}
+function aiErrorMessage(err){ return esc(err && err.message ? err.message : 'Er ging iets mis.'); }
+function kindPlural(entityType){ return entityType==='lead' ? 'leads' : entityType==='contact' ? 'contacts' : 'deals'; }
+function aiCloseSvg(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>'; }
+
+function openAIModal(title){
+  document.getElementById('formBox').innerHTML =
+    '<div class="modal-head"><div class="modal-title">'+esc(title)+'</div><button class="modal-close" onclick="closeFormModal()">'+aiCloseSvg()+'</button></div>'+
+    '<div class="modal-body" id="aiModalBody"><div class="ai-loading"><span class="spinner"></span> AI denkt na…</div></div>'+
+    '<div class="modal-foot" id="aiModalFoot"></div>';
+  document.getElementById('formOverlay').classList.add('show');
+}
+function setAIModalBody(html){ const el = document.getElementById('aiModalBody'); if(el) el.innerHTML = html; }
+function setAIModalFoot(html){ const el = document.getElementById('aiModalFoot'); if(el) el.innerHTML = html || ''; }
+function aiModalCloseFoot(){ return '<button class="btn-secondary" onclick="closeFormModal()">Sluiten</button>'; }
+
+async function createTaskFromAISuggestion(sugg, links){
+  links = links || {};
+  sugg = sugg || {};
+  const dueInDays = Number(sugg.dueInDays);
+  const due = Number.isFinite(dueInDays) ? new Date(Date.now() + dueInDays*86400000).toISOString().slice(0,10) : null;
+  const contactUuid = links.contactId ? uuidFor('contacts', links.contactId) : null;
+  const dealUuid = links.dealId ? uuidFor('deals', links.dealId) : null;
+  const linkedDeal = links.dealId ? deals.find(d=>d.id===links.dealId) : null;
+  const linkedContact = links.contactId ? contacts.find(c=>c.id===links.contactId) : null;
+  const payload = {
+    title: (sugg.title||'').toString().trim().slice(0,200) || 'Taak',
+    priority: ['hoog','normaal','laag'].includes(sugg.priority) ? sugg.priority : 'normaal',
+    due_date: due, contact_id: contactUuid, deal_id: dealUuid,
+    tag: links.tag || (linkedDeal ? linkedDeal.company : (linkedContact ? linkedContact.company : 'AI')),
+    org_id: currentOrg.id, created_by: currentUser.id, done: false
   };
-  return stageMsgs[d.stage] || ('Status van deze deal bij <b>'+c.company+'</b> is op dit moment onduidelijk.');
+  const { data, error } = await sb.from('tasks').insert(payload).select().single();
+  if(error){ showToast('Taak aanmaken mislukt: '+friendlyDbError(error)); return false; }
+  tasks.unshift(taskFromRow(data));
+  renderTasks();
+  document.getElementById('navCountTasks').textContent = tasks.filter(t=>!t.done).length;
+  if(document.getElementById('view-deal-detail').classList.contains('active')) renderDealDetailTasks();
+  if(document.getElementById('view-contact-detail').classList.contains('active')) renderContactDetailTasks();
+  showToast('Taak "'+payload.title+'" toegevoegd');
+  return true;
+}
+
+/* ---- Ask / daily focus ---- */
+async function runAIAsk(presetQuery){
+  const input = document.getElementById('aiAskInput');
+  const query = (presetQuery!==undefined ? presetQuery : input.value).trim();
+  if(!query) return;
+  input.value = query;
+  const resultEl = document.getElementById('aiAskResult');
+  resultEl.innerHTML = '<div class="ai-loading"><span class="spinner"></span> AI denkt na…</div>';
+  try {
+    const data = await callAI('ask', { query });
+    resultEl.innerHTML = '<div class="ai-answer">'+esc(data.answer||'')+'</div>';
+  } catch(err){
+    resultEl.innerHTML = '<div class="sd-empty" style="color:var(--coral);">'+aiErrorMessage(err)+'</div>';
+  }
+}
+
+/* ---- Deal / contact summary ---- */
+async function refreshDealAiSummary(){
+  const box = document.getElementById('ddAiSummary');
+  if(!box || currentDealId==null) return;
+  box.textContent = 'AI-samenvatting laden…';
+  try {
+    const data = await callAI('summarize_deal', { dealId: uuidFor('deals', currentDealId) });
+    box.innerHTML = esc(data.summary||'');
+  } catch(err){
+    box.innerHTML = '<span style="color:var(--coral);">'+aiErrorMessage(err)+'</span>';
+  }
+}
+async function refreshContactAiSummary(localId){
+  const box = document.getElementById('cdAiSummary');
+  if(!box) return;
+  box.textContent = 'AI-samenvatting laden…';
+  try {
+    const data = await callAI('summarize_contact', { contactId: uuidFor('contacts', localId) });
+    box.innerHTML = esc(data.summary||'');
+  } catch(err){
+    box.innerHTML = '<span style="color:var(--coral);">'+aiErrorMessage(err)+'</span>';
+  }
+}
+
+/* ---- Next action (deal / contact / lead) ---- */
+async function openNextActionModal(entityType, localId){
+  openAIModal('Volgende actie');
+  try{
+    const entityId = uuidFor(kindPlural(entityType), localId);
+    const data = await callAI('next_action', { entityType, entityId });
+    let html = '<div class="ai-answer"><b>'+esc(data.action||'')+'</b><p style="margin-top:8px;">'+esc(data.reasoning||'')+'</p></div>';
+    setAIModalBody(html);
+    if(data.suggestedTask && data.suggestedTask.title){
+      window._pendingAISuggestion = { suggestion: data.suggestedTask, entityType, localId };
+      setAIModalFoot(aiModalCloseFoot()+'<button class="btn-primary" onclick="applyPendingAITask()">+ Taak: '+esc(data.suggestedTask.title)+'</button>');
+    } else {
+      setAIModalFoot(aiModalCloseFoot());
+    }
+  } catch(err){
+    setAIModalBody('<div class="sd-empty" style="color:var(--coral);">'+aiErrorMessage(err)+'</div>');
+    setAIModalFoot(aiModalCloseFoot());
+  }
+}
+async function applyPendingAITask(){
+  const p = window._pendingAISuggestion;
+  if(!p) return;
+  const links = p.entityType==='contact' ? {contactId:p.localId} : p.entityType==='deal' ? {dealId:p.localId} : {};
+  const ok = await createTaskFromAISuggestion(p.suggestion, links);
+  window._pendingAISuggestion = null;
+  if(ok) closeFormModal();
+}
+
+/* ---- Draft message (email / follow-up note) ---- */
+function getEntityEmail(entityType, localId){
+  if(entityType==='contact'){ const c = contacts.find(x=>x.id===localId); return c ? c.email : ''; }
+  if(entityType==='deal'){ const d = deals.find(x=>x.id===localId); const c = d && contacts.find(x=>x.id===d.contactId); return c ? c.email : ''; }
+  if(entityType==='lead'){ const l = leads.find(x=>x.id===localId); return l ? l.email : ''; }
+  return '';
+}
+async function openDraftMessageModal(entityType, localId, kind){
+  openAIModal(kind==='email' ? 'Concept e-mail' : 'Follow-up bericht');
+  try{
+    const entityId = uuidFor(kindPlural(entityType), localId);
+    const data = await callAI('draft_message', { entityType, entityId, kind });
+    let html;
+    if(kind==='email'){
+      html = '<div class="field-row"><label>Onderwerp</label><input type="text" id="aiDraftSubject" value="'+escAttr(data.subject||'')+'"></div>'+
+             '<div class="field-row"><label>Bericht</label><textarea id="aiDraftBody" rows="10">'+esc(data.body||'')+'</textarea></div>';
+    } else {
+      html = '<div class="field-row"><label>Bericht</label><textarea id="aiDraftBody" rows="6">'+esc(data.message||'')+'</textarea></div>';
+    }
+    setAIModalBody(html);
+    const actionBtn = kind==='email'
+      ? '<button class="btn-primary" onclick="sendAIDraftAsEmail(\''+entityType+'\','+localId+')">✉ Openen in e-mail</button>'
+      : '<button class="btn-primary" onclick="copyAIDraftText()">Kopiëren</button>';
+    setAIModalFoot(aiModalCloseFoot()+actionBtn);
+  } catch(err){
+    setAIModalBody('<div class="sd-empty" style="color:var(--coral);">'+aiErrorMessage(err)+'</div>');
+    setAIModalFoot(aiModalCloseFoot());
+  }
+}
+function sendAIDraftAsEmail(entityType, localId){
+  const subjectEl = document.getElementById('aiDraftSubject');
+  const bodyEl = document.getElementById('aiDraftBody');
+  const email = getEntityEmail(entityType, localId);
+  const subject = subjectEl ? subjectEl.value : '';
+  const body = bodyEl ? bodyEl.value : '';
+  window.location.href = 'mailto:'+email+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+}
+function copyAIDraftText(){
+  const el = document.getElementById('aiDraftBody');
+  if(!el) return;
+  navigator.clipboard.writeText(el.value).then(()=>showToast('Gekopieerd naar klembord')).catch(()=>showToast('Kopiëren mislukt'));
+}
+
+/* ---- Suggest tasks ---- */
+async function openSuggestTasksModal(entityType, localId){
+  openAIModal('Taken voorstellen');
+  try{
+    const entityId = uuidFor(kindPlural(entityType), localId);
+    const data = await callAI('suggest_tasks', { entityType, entityId });
+    const tasksArr = Array.isArray(data.tasks) ? data.tasks : [];
+    if(!tasksArr.length){
+      setAIModalBody('<div class="sd-empty">Geen nieuwe taken voorgesteld — lijkt al goed gedekt.</div>');
+      setAIModalFoot(aiModalCloseFoot());
+      return;
+    }
+    window._pendingAITaskList = { tasks: tasksArr, entityType, localId, added: [] };
+    renderAISuggestTasksModal();
+  } catch(err){
+    setAIModalBody('<div class="sd-empty" style="color:var(--coral);">'+aiErrorMessage(err)+'</div>');
+    setAIModalFoot(aiModalCloseFoot());
+  }
+}
+function renderAISuggestTasksModal(){
+  const p = window._pendingAITaskList;
+  if(!p) return;
+  setAIModalBody('<div class="ai-task-list">'+p.tasks.map((t,i)=>
+    '<div class="ai-task-row"><div><div class="ai-task-title">'+esc(t.title||'')+'</div><div class="ai-task-meta">'+esc(t.priority||'normaal')+(t.dueInDays!=null?' · over '+parseInt(t.dueInDays)+' dagen':'')+'</div></div>'+
+    (p.added.includes(i) ? '<span style="color:var(--accent); font-size:12px; flex-shrink:0;">✓ Toegevoegd</span>' : '<button class="btn-secondary" onclick="applyAISuggestedTask('+i+')">+ Toevoegen</button>')+
+    '</div>'
+  ).join('')+'</div>');
+  setAIModalFoot(aiModalCloseFoot());
+}
+async function applyAISuggestedTask(i){
+  const p = window._pendingAITaskList;
+  if(!p) return;
+  const sugg = p.tasks[i];
+  const links = p.entityType==='contact' ? {contactId:p.localId} : p.entityType==='deal' ? {dealId:p.localId} : {};
+  const ok = await createTaskFromAISuggestion(sugg, links);
+  if(ok){ p.added.push(i); renderAISuggestTasksModal(); }
+}
+
+/* ---- Meeting summary ---- */
+function openMeetingSummaryModal(entityType, localId){
+  openAIModal('Gesprek samenvatten');
+  setAIModalBody(
+    '<div class="field-row"><label>Plak notities of transcript van het gesprek</label><textarea id="aiMeetingInput" rows="8" placeholder="Plak hier je ruwe notities of transcript..."></textarea></div>'+
+    '<div id="aiMeetingResult"></div>'
+  );
+  setAIModalFoot('<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="runMeetingSummary(\''+entityType+'\','+localId+')">Samenvatten</button>');
+}
+async function runMeetingSummary(entityType, localId){
+  const input = document.getElementById('aiMeetingInput');
+  const transcript = input.value.trim();
+  if(!transcript){ showToast('Vul eerst notities of een transcript in'); return; }
+  const resultEl = document.getElementById('aiMeetingResult');
+  resultEl.innerHTML = '<div class="ai-loading"><span class="spinner"></span> Samenvatten…</div>';
+  try{
+    const entityId = uuidFor(kindPlural(entityType), localId);
+    const data = await callAI('meeting_summary', { entityType, entityId, transcript });
+    window._pendingMeetingSummary = { data, entityType, localId };
+    const items = Array.isArray(data.actionItems) ? data.actionItems : [];
+    resultEl.innerHTML = '<div class="ai-answer"><b>Samenvatting</b><p>'+esc(data.summary||'')+'</p></div>'+
+      (items.length ? '<div class="ai-task-list">'+items.map((t,i)=>
+        '<div class="ai-task-row"><div><div class="ai-task-title">'+esc(t.title||'')+'</div><div class="ai-task-meta">'+esc(t.priority||'normaal')+'</div></div><button class="btn-secondary" onclick="applyMeetingActionItem('+i+')">+ Taak</button></div>'
+      ).join('')+'</div>' : '');
+    setAIModalFoot(aiModalCloseFoot()+'<button class="btn-primary" onclick="saveMeetingSummaryAsNote()">Opslaan als notitie</button>');
+  } catch(err){
+    resultEl.innerHTML = '<div class="sd-empty" style="color:var(--coral);">'+aiErrorMessage(err)+'</div>';
+  }
+}
+async function applyMeetingActionItem(i){
+  const p = window._pendingMeetingSummary;
+  if(!p) return;
+  const items = p.data.actionItems || [];
+  const sugg = items[i];
+  const links = p.entityType==='contact' ? {contactId:p.localId} : p.entityType==='deal' ? {dealId:p.localId} : {};
+  await createTaskFromAISuggestion(sugg, links);
+}
+async function saveMeetingSummaryAsNote(){
+  const p = window._pendingMeetingSummary;
+  if(!p || !p.data || !p.data.summary) return;
+  const entityId = uuidFor(kindPlural(p.entityType), p.localId);
+  const { error } = await sb.from('notes').insert({
+    org_id: currentOrg.id, entity_type: p.entityType, entity_id: entityId,
+    body: '[AI-samenvatting gesprek]\n'+p.data.summary, created_by: currentUser.id
+  });
+  if(error){ showToast('Opslaan mislukt: '+friendlyDbError(error)); return; }
+  showToast('Samenvatting opgeslagen als notitie');
+  closeFormModal();
+  if(p.entityType==='contact' && currentContactId===p.localId && document.getElementById('view-contact-detail').classList.contains('active')){
+    document.getElementById('cdTimeline').innerHTML = await fetchEntityTimeline('contact', entityId);
+  }
+  if(p.entityType==='deal' && currentDealId===p.localId && document.getElementById('view-deal-detail').classList.contains('active')){
+    document.getElementById('ddTimeline').innerHTML = await fetchEntityTimeline('deal', entityId);
+  }
+}
+
+/* ---- Lead AI insight (inline in the lead edit form) ---- */
+async function runLeadAISummary(localId){
+  const el = document.getElementById('aiLeadInsight');
+  if(!el) return;
+  el.innerHTML = '<div class="ai-loading"><span class="spinner"></span> Laden…</div>';
+  try{
+    const data = await callAI('summarize_lead', { leadId: uuidFor('leads', localId) });
+    el.innerHTML = '<div class="ai-answer">'+esc(data.summary||'')+'</div>';
+  } catch(err){ el.innerHTML = '<div style="color:var(--coral); font-size:12.5px;">'+aiErrorMessage(err)+'</div>'; }
+}
+async function runLeadAIScore(localId){
+  const el = document.getElementById('aiLeadInsight');
+  if(!el) return;
+  el.innerHTML = '<div class="ai-loading"><span class="spinner"></span> Laden…</div>';
+  try{
+    const data = await callAI('score_lead', { leadId: uuidFor('leads', localId) });
+    const score = Math.max(0, Math.min(100, parseInt(data.score)||0));
+    el.innerHTML = '<div class="ai-answer">Voorgestelde score: <b>'+score+'</b><p>'+esc(data.reasoning||'')+'</p>'+
+      '<button type="button" class="btn-secondary" onclick="applyLeadAIScore('+score+')">Toepassen op score-veld</button></div>';
+  } catch(err){ el.innerHTML = '<div style="color:var(--coral); font-size:12.5px;">'+aiErrorMessage(err)+'</div>'; }
+}
+function applyLeadAIScore(score){
+  const input = document.getElementById('ldScore');
+  if(input){ input.value = score; showToast('Score toegepast — vergeet niet op te slaan'); }
+}
+async function runLeadAINextAction(localId){
+  const el = document.getElementById('aiLeadInsight');
+  if(!el) return;
+  el.innerHTML = '<div class="ai-loading"><span class="spinner"></span> Laden…</div>';
+  try{
+    const data = await callAI('next_action', { entityType:'lead', entityId: uuidFor('leads', localId) });
+    let html = '<div class="ai-answer"><b>'+esc(data.action||'')+'</b><p>'+esc(data.reasoning||'')+'</p>';
+    if(data.suggestedTask && data.suggestedTask.title){
+      window._pendingAISuggestion = { suggestion: data.suggestedTask, entityType:'lead', localId };
+      html += '<button type="button" class="btn-secondary" onclick="applyPendingAITask()">+ Taak: '+esc(data.suggestedTask.title)+'</button>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  } catch(err){ el.innerHTML = '<div style="color:var(--coral); font-size:12.5px;">'+aiErrorMessage(err)+'</div>'; }
 }
 
 /* ================= NOTIFICATIONS ================= */
