@@ -520,6 +520,10 @@
   .auth-switch{ text-align:center; font-size:12.5px; color:var(--muted); margin-top:16px; }
   .auth-switch a{ color:var(--accent); font-weight:700; cursor:pointer; }
   .auth-loading{ display:flex; align-items:center; justify-content:center; min-height:100vh; color:var(--muted); font-size:13.5px; }
+  .spinner{ width:16px; height:16px; border-radius:50%; border:2px solid var(--border); border-top-color:var(--accent); animation:spin .7s linear infinite; display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .app-loading-overlay{ position:fixed; inset:0; background:var(--bg); z-index:400; display:flex; align-items:center; justify-content:center; gap:10px; color:var(--muted); font-size:13.5px; }
+  .app-loading-overlay.hide{ display:none; }
 </style>
 </head>
 <body>
@@ -558,6 +562,7 @@
   </div>
 </div>
 
+<div class="app-loading-overlay hide" id="appLoadingOverlay"><span class="spinner"></span> Gegevens laden…</div>
 <div class="app" id="appRoot" style="display:none;">
 
   <!-- SIDEBAR -->
@@ -572,9 +577,17 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         Dashboard
       </button>
+      <button class="nav-item" data-view="companies" onclick="showView('companies')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 8h6v13h-6M7 7h1M10 7h1M7 11h1M10 11h1M7 15h1M10 15h1"/></svg>
+        Bedrijven <span class="nav-count" id="navCountCompanies">0</span>
+      </button>
       <button class="nav-item" data-view="contacts" onclick="showView('contacts')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5c1.7.4 3 2 3 3.9s-1.3 3.5-3 3.9"/><path d="M18.5 14.3c2 .6 3.5 2.6 3.5 5"/></svg>
         Contacten <span class="nav-count" id="navCountContacts">8</span>
+      </button>
+      <button class="nav-item" data-view="leads" onclick="showView('leads')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4z"/></svg>
+        Leads <span class="nav-count" id="navCountLeads">0</span>
       </button>
       <button class="nav-item" data-view="deals" onclick="showView('deals')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/><path d="M12 11l8-4.5M12 11v9M12 11L4 6.5"/></svg>
@@ -694,34 +707,34 @@
       </div>
 
       <div class="stats-row">
-        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+        <div class="stat-card"><div class="layerbar"><span id="dashStatOpenBar" style="height:0%;background:var(--accent);"></span></div>
           <div class="stat-top"><div class="stat-name">Open deals</div><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div></div>
-          <div class="stat-value">0</div><div class="stat-delta">Nog geen deals</div>
+          <div class="stat-value" id="dashStatOpen">0</div><div class="stat-delta" id="dashStatOpenDelta">Nog geen deals</div>
         </div>
-        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+        <div class="stat-card"><div class="layerbar"><span id="dashStatContactsBar" style="height:0%;background:var(--accent);"></span></div>
           <div class="stat-top"><div class="stat-name">Contacten</div><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div></div>
-          <div class="stat-value">0</div><div class="stat-delta">Nog geen contacten</div>
+          <div class="stat-value" id="dashStatContacts">0</div><div class="stat-delta" id="dashStatContactsDelta">Nog geen contacten</div>
         </div>
-        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+        <div class="stat-card"><div class="layerbar"><span id="dashStatRevenueBar" style="height:0%;background:var(--accent);"></span></div>
           <div class="stat-top"><div class="stat-name">Omzet gesloten</div><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1v22M17 5.5c0-1.9-2-3-5-3s-5 1.4-5 3.3 2 2.9 5 3.4 5 1.4 5 3.4-2 3.3-5 3.3-5-1.1-5-3"/></svg></div></div>
-          <div class="stat-value">€0</div><div class="stat-delta">Nog geen omzet</div>
+          <div class="stat-value" id="dashStatRevenue">€0</div><div class="stat-delta" id="dashStatRevenueDelta">Nog geen omzet</div>
         </div>
-        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--amber);"></span></div>
+        <div class="stat-card"><div class="layerbar"><span id="dashStatWinRateBar" style="height:0%;background:var(--amber);"></span></div>
           <div class="stat-top"><div class="stat-name">Win rate</div><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 12l2.3 2.3L16 9"/><circle cx="12" cy="12" r="9"/></svg></div></div>
-          <div class="stat-value">—</div><div class="stat-delta">Nog niet genoeg data</div>
+          <div class="stat-value" id="dashStatWinRate">—</div><div class="stat-delta" id="dashStatWinRateDelta">Nog niet genoeg data</div>
         </div>
       </div>
 
       <div class="content-grid">
         <div class="panel">
-          <div class="panel-head"><div class="panel-title">Actieve deals</div><div class="chip-select">Deze maand ▾</div></div>
+          <div class="panel-head"><div class="panel-title">Actieve deals</div></div>
           <table class="deal-table"><thead><tr><th>Bedrijf</th><th>Fase</th><th>Waarde</th><th>Kans</th><th>Sluit</th></tr></thead>
             <tbody id="dashDealsBody"></tbody>
           </table>
         </div>
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Recente activiteit</div></div>
-          <div class="activity-list">
+          <div class="activity-list" id="dashActivityList">
             <div class="sd-empty" style="padding:30px;">Nog geen activiteit. Zodra je aan de slag gaat met contacten, deals en taken, verschijnt hier je tijdlijn.</div>
           </div>
         </div>
@@ -743,6 +756,27 @@
           <div class="panel-head"><div class="panel-title">Pipeline overzicht</div><div class="chip-select" onclick="showView('pipeline')">Volledig bord ▾</div></div>
           <div class="pipeline-cols" id="dashPipelineCols"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- ============ COMPANIES ============ -->
+    <section id="view-companies" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Bedrijven</div><div class="page-sub" id="companiesCount">0 bedrijven</div></div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-wrap" style="width:280px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="companiesFilterInput" placeholder="Filter op bedrijfsnaam of domein..." oninput="companiesPage=1; renderCompanies();">
+        </div>
+        <button class="btn-secondary" style="margin-left:auto;" onclick="exportCompaniesCSV()">⬇ CSV</button>
+      </div>
+      <div class="panel">
+        <table class="deal-table">
+          <thead><tr><th>Bedrijf</th><th>Domein</th><th>Telefoon</th><th>Contacten</th></tr></thead>
+          <tbody id="companiesBody"></tbody>
+        </table>
+        <div id="companiesPagination"></div>
       </div>
     </section>
 
@@ -768,6 +802,32 @@
           <tbody id="contactsBody"></tbody>
         </table>
         <div id="contactsPagination"></div>
+      </div>
+    </section>
+
+    <!-- ============ LEADS ============ -->
+    <section id="view-leads" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Leads</div><div class="page-sub" id="leadsCount">0 leads</div></div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-wrap" style="width:280px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="leadsFilterInput" placeholder="Filter op naam of bedrijf..." oninput="leadsPage=1; renderLeads();">
+        </div>
+        <div class="filter-chip active" id="chip-lead-all" onclick="setLeadStatus('all')">Alle</div>
+        <div class="filter-chip" id="chip-lead-new" onclick="setLeadStatus('new')">Nieuw</div>
+        <div class="filter-chip" id="chip-lead-contacted" onclick="setLeadStatus('contacted')">Gecontacteerd</div>
+        <div class="filter-chip" id="chip-lead-qualified" onclick="setLeadStatus('qualified')">Gekwalificeerd</div>
+        <div class="filter-chip" id="chip-lead-converted" onclick="setLeadStatus('converted')">Geconverteerd</div>
+        <button class="btn-secondary" style="margin-left:auto;" onclick="exportLeadsCSV()">⬇ CSV</button>
+      </div>
+      <div class="panel">
+        <table class="deal-table">
+          <thead><tr><th>Naam</th><th>Bedrijf</th><th>Status</th><th>Bron</th><th>Score</th><th>Actie</th></tr></thead>
+          <tbody id="leadsBody"></tbody>
+        </table>
+        <div id="leadsPagination"></div>
       </div>
     </section>
 
@@ -1327,6 +1387,12 @@ let stages = [];
 const contacts = [
 ];
 
+const companies = [
+];
+
+const leads = [
+];
+
 const deals = [
 ];
 
@@ -1353,7 +1419,8 @@ const calEvents = {
 
 let contactTagFilter = 'all';
 const PAGE_SIZE = 6;
-let contactsPage = 1, dealsPage = 1, invoicesPage = 1, contractsPage = 1;
+let contactsPage = 1, dealsPage = 1, invoicesPage = 1, contractsPage = 1, companiesPage = 1, leadsPage = 1;
+let leadStatusFilter = 'all';
 function renderPaginationBar(containerId, totalItems, page, gotoFnName){
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
   const el = document.getElementById(containerId);
@@ -1377,6 +1444,8 @@ const primaryActions = {
   dashboard: {label:'+ Nieuwe deal', fn:()=>showView('deals')},
   contacts: {label:'+ Nieuw contact', fn:()=>openFormModal('contact')},
   'contact-detail': {label:'+ Taak', fn:()=>showView('tasks')},
+  companies: {label:'+ Nieuw bedrijf', fn:()=>openFormModal('company')},
+  leads: {label:'+ Nieuwe lead', fn:()=>openFormModal('lead')},
   deals: {label:'+ Nieuwe deal', fn:()=>openFormModal('deal')},
   pipeline: {label:'+ Nieuwe deal', fn:()=>openFormModal('deal')},
   'deal-detail': {label:'✉ Mail sturen', fn:()=>showToast('Mailcomposer volgt binnenkort')},
@@ -1510,6 +1579,42 @@ function renderDashboard(){
     const top2 = inStage.slice(0,2);
     return '<div><div class="pcol-head"><span class="pcol-name">'+esc(s.name)+'</span><span class="pcol-count">'+inStage.length+'</span></div><div class="pcol-bar" style="background:'+s.color+';"></div>'+(top2.length?top2.map(d=>'<div class="pcard"><div class="pname">'+esc(d.company)+'</div><div class="pamt">'+fmtEur(d.amount)+'</div></div>').join(''):'<div style="font-size:11.5px; color:var(--muted-2); padding:4px 2px;">Leeg</div>')+'</div>';
   }).join('');
+
+  renderDashboardStats();
+}
+function renderDashboardStats(){
+  const openDeals = deals.filter(d=>d.status==='open' || (d.status===undefined && d.stage!=='gewonnen' && d.stage!=='verloren'));
+  const wonDeals = deals.filter(d=>d.status==='gewonnen');
+  const lostDeals = deals.filter(d=>d.status==='verloren');
+  const revenue = wonDeals.reduce((s,d)=>s+d.amount,0);
+  const decided = wonDeals.length + lostDeals.length;
+  const winRate = decided>0 ? Math.round((wonDeals.length/decided)*100) : null;
+  const maxBar = Math.max(openDeals.length, contacts.length, 1);
+
+  document.getElementById('dashStatOpen').textContent = openDeals.length;
+  document.getElementById('dashStatOpenDelta').textContent = openDeals.length ? fmtEur(openDeals.reduce((s,d)=>s+d.amount,0)) + ' in pipeline' : 'Nog geen deals';
+  document.getElementById('dashStatOpenBar').style.height = Math.min(100, Math.round(openDeals.length/maxBar*100)) + '%';
+
+  document.getElementById('dashStatContacts').textContent = contacts.length;
+  document.getElementById('dashStatContactsDelta').textContent = contacts.length ? contacts.filter(c=>c.tag==='Klant').length + ' klant(en)' : 'Nog geen contacten';
+  document.getElementById('dashStatContactsBar').style.height = Math.min(100, Math.round(contacts.length/maxBar*100)) + '%';
+
+  document.getElementById('dashStatRevenue').textContent = fmtEur(revenue);
+  document.getElementById('dashStatRevenueDelta').textContent = wonDeals.length ? wonDeals.length + ' gewonnen deal(s)' : 'Nog geen omzet';
+  document.getElementById('dashStatRevenueBar').style.height = (revenue>0 ? 70 : 0) + '%';
+
+  document.getElementById('dashStatWinRate').textContent = winRate===null ? '—' : winRate+'%';
+  document.getElementById('dashStatWinRateDelta').textContent = decided>0 ? wonDeals.length+' van '+decided+' beslist' : 'Nog niet genoeg data';
+  document.getElementById('dashStatWinRateBar').style.height = (winRate||0) + '%';
+}
+async function renderRecentActivity(){
+  const el = document.getElementById('dashActivityList');
+  if(!el) return;
+  const { data } = await sb.from('activities').select('*').order('created_at', {ascending:false}).limit(8);
+  const rows = data || [];
+  el.innerHTML = rows.length ? rows.map(a=>
+    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div><div class="act-text">'+esc(a.message)+'</div><div class="act-time">'+new Date(a.created_at).toLocaleString('nl-NL')+'</div></div></div>'
+  ).join('') : '<div class="sd-empty" style="padding:30px;">Nog geen activiteit. Zodra je aan de slag gaat met contacten, deals en taken, verschijnt hier je tijdlijn.</div>';
 }
 
 /* ================= CONTACTS ================= */
@@ -1533,6 +1638,185 @@ function renderContacts(){
   renderPaginationBar('contactsPagination', list.length, contactsPage, 'gotoContactsPage');
 }
 function gotoContactsPage(p){ contactsPage = p; renderContacts(); }
+
+/* ================= COMPANIES ================= */
+function renderCompanies(){
+  const q = (document.getElementById('companiesFilterInput').value||'').toLowerCase();
+  const list = companies.filter(c=>c.name.toLowerCase().includes(q) || c.domain.toLowerCase().includes(q));
+  document.getElementById('companiesCount').textContent = list.length + ' bedrijven';
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  companiesPage = Math.min(companiesPage, totalPages);
+  const pageItems = list.slice((companiesPage-1)*PAGE_SIZE, companiesPage*PAGE_SIZE);
+  document.getElementById('companiesBody').innerHTML = pageItems.map(c=>{
+    const contactCount = contacts.filter(x=>x.company.toLowerCase()===c.name.toLowerCase()).length;
+    return '<tr onclick="openFormModal(\'company\','+c.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+esc(c.initials)+'</div><div class="deal-co">'+esc(c.name)+'</div></div></td><td class="prob">'+esc(c.domain||'—')+'</td><td class="prob">'+esc(c.phone||'—')+'</td><td class="prob">'+contactCount+' contact(en)</td></tr>';
+  }).join('') || '<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:28px;">Geen bedrijven gevonden.<br><button class="btn-secondary" style="margin-top:10px;" onclick="openFormModal(\'company\')">+ Nieuw bedrijf toevoegen</button></td></tr>';
+  renderPaginationBar('companiesPagination', list.length, companiesPage, 'gotoCompaniesPage');
+}
+function gotoCompaniesPage(p){ companiesPage = p; renderCompanies(); }
+function buildCompanyForm(editId){
+  const rec = editId ? companies.find(c=>c.id===editId) : null;
+  return '<div class="modal-head"><div class="modal-title">'+(rec?'Bedrijf bewerken':'Nieuw bedrijf')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
+  '<div class="modal-body">'+
+    '<div class="field-row"><label>Bedrijfsnaam <span class="req">*</span></label><input type="text" id="cmName" value="'+escAttr(rec?rec.name:'')+'"><div class="field-error-msg">Vul een bedrijfsnaam in</div></div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Website / domein</label><input type="text" id="cmDomain" value="'+escAttr(rec?rec.domain:'')+'" placeholder="bv. acme.nl"></div>'+
+      '<div><label>Telefoon</label><input type="text" id="cmPhone" value="'+escAttr(rec?rec.phone:'')+'" placeholder="020-1234567"></div>'+
+    '</div>'+
+    '<div class="field-row"><label>Adres</label><textarea id="cmAddress">'+escAttr(rec?rec.address:'')+'</textarea></div>'+
+  '</div>'+
+  '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteCompany('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitCompanyForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Bedrijf toevoegen')+'</button></div>';
+}
+async function submitCompanyForm(editId){
+  const name = document.getElementById('cmName');
+  if(!validateField(name, 'Vul een bedrijfsnaam in')) return;
+  const payload = {
+    name: name.value.trim(),
+    domain: document.getElementById('cmDomain').value.trim() || null,
+    phone: document.getElementById('cmPhone').value.trim() || null,
+    address: document.getElementById('cmAddress').value.trim() || null
+  };
+  if(editId){
+    const uuid = uuidFor('companies', editId);
+    const { data, error } = await sb.from('companies').update(payload).eq('id', uuid).select().single();
+    if(error){ showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
+    companies[companies.findIndex(c=>c.id===editId)] = companyFromRow(data);
+    closeFormModal(); renderCompanies();
+    showToast('Bedrijf bijgewerkt');
+    return;
+  }
+  payload.org_id = currentOrg.id;
+  payload.created_by = currentUser.id;
+  const { data, error } = await sb.from('companies').insert(payload).select().single();
+  if(error){ showToast('Aanmaken mislukt: '+friendlyDbError(error)); return; }
+  companies.unshift(companyFromRow(data));
+  closeFormModal(); renderCompanies();
+  document.getElementById('navCountCompanies').textContent = companies.length;
+  showToast('Bedrijf "'+name.value.trim()+'" toegevoegd');
+}
+async function deleteCompany(id){
+  const rec = companies.find(c=>c.id===id);
+  if(!rec) return;
+  if(!confirm('Bedrijf "'+rec.name+'" verwijderen? Gekoppelde contacten en deals blijven bestaan.')) return;
+  const { error } = await sb.from('companies').delete().eq('id', uuidFor('companies', id));
+  if(error){ showToast('Verwijderen mislukt: '+friendlyDbError(error)); return; }
+  companies.splice(companies.findIndex(c=>c.id===id), 1);
+  closeFormModal(); renderCompanies();
+  document.getElementById('navCountCompanies').textContent = companies.length;
+  showToast('Bedrijf verwijderd');
+}
+function exportCompaniesCSV(){
+  downloadCSV('bedrijven.csv', ['Naam','Domein','Telefoon','Adres'], companies.map(c=>[c.name,c.domain,c.phone,c.address]));
+}
+
+/* ================= LEADS ================= */
+function setLeadStatus(status){
+  leadStatusFilter = status;
+  leadsPage = 1;
+  document.querySelectorAll('#view-leads .filter-chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('chip-lead-'+status).classList.add('active');
+  renderLeads();
+}
+function renderLeads(){
+  const q = (document.getElementById('leadsFilterInput').value||'').toLowerCase();
+  let list = leads.filter(l=> (leadStatusFilter==='all' || l.status===leadStatusFilter) && (l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q)) );
+  document.getElementById('leadsCount').textContent = list.length + ' leads';
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  leadsPage = Math.min(leadsPage, totalPages);
+  const pageItems = list.slice((leadsPage-1)*PAGE_SIZE, leadsPage*PAGE_SIZE);
+  document.getElementById('leadsBody').innerHTML = pageItems.map(l=>
+    '<tr onclick="openFormModal(\'lead\','+l.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+l.color+';color:'+l.text+';">'+esc(l.initials)+'</div><div class="deal-co">'+esc(l.name)+'</div></div></td><td>'+esc(l.company||'—')+'</td><td><span class="tag">'+esc(LEAD_STATUS_LABEL[l.status]||l.status)+'</span></td><td class="prob">'+esc(l.source||'—')+'</td><td class="prob">'+l.score+'</td><td class="prob">'+(l.converted?'<span style="color:var(--muted-2);">Geconverteerd</span>':'<button class="btn-secondary" onclick="event.stopPropagation(); convertLeadRow('+l.id+')">→ Converteren</button>')+'</td></tr>'
+  ).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:28px;">Geen leads gevonden.<br><button class="btn-secondary" style="margin-top:10px;" onclick="openFormModal(\'lead\')">+ Nieuwe lead toevoegen</button></td></tr>';
+  renderPaginationBar('leadsPagination', list.length, leadsPage, 'gotoLeadsPage');
+}
+function gotoLeadsPage(p){ leadsPage = p; renderLeads(); }
+function buildLeadForm(editId){
+  const rec = editId ? leads.find(l=>l.id===editId) : null;
+  const statusOptions = Object.keys(LEAD_STATUS_LABEL).map(k=>'<option value="'+k+'" '+(rec&&rec.status===k?'selected':'')+'>'+LEAD_STATUS_LABEL[k]+'</option>').join('');
+  return '<div class="modal-head"><div class="modal-title">'+(rec?'Lead bewerken':'Nieuwe lead')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
+  '<div class="modal-body">'+
+    '<div class="field-row"><label>Naam <span class="req">*</span></label><input type="text" id="ldName" value="'+escAttr(rec?rec.name:'')+'"><div class="field-error-msg">Vul een naam in</div></div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Bedrijf</label><input type="text" id="ldCompany" value="'+escAttr(rec?rec.company:'')+'"></div>'+
+      '<div><label>E-mail</label><input type="email" id="ldEmail" value="'+escAttr(rec?rec.email:'')+'"></div>'+
+    '</div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Telefoon</label><input type="text" id="ldPhone" value="'+escAttr(rec?rec.phone:'')+'"></div>'+
+      '<div><label>Bron</label><input type="text" id="ldSource" value="'+escAttr(rec?rec.source:'')+'" placeholder="bv. Website, LinkedIn"></div>'+
+    '</div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Status</label><select id="ldStatus">'+statusOptions+'</select></div>'+
+      '<div><label>Score (0-100)</label><input type="text" id="ldScore" value="'+(rec?rec.score:'0')+'"></div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteLead('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitLeadForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Lead toevoegen')+'</button></div>';
+}
+async function submitLeadForm(editId){
+  const name = document.getElementById('ldName');
+  if(!validateField(name, 'Vul een naam in')) return;
+  const scoreRaw = parseInt(document.getElementById('ldScore').value);
+  const payload = {
+    name: name.value.trim(),
+    company: document.getElementById('ldCompany').value.trim() || null,
+    email: document.getElementById('ldEmail').value.trim() || null,
+    phone: document.getElementById('ldPhone').value.trim() || null,
+    source: document.getElementById('ldSource').value.trim() || null,
+    status: document.getElementById('ldStatus').value,
+    score: isNaN(scoreRaw) ? 0 : Math.max(0, Math.min(100, scoreRaw))
+  };
+  if(editId){
+    const uuid = uuidFor('leads', editId);
+    const { data, error } = await sb.from('leads').update(payload).eq('id', uuid).select().single();
+    if(error){ showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
+    leads[leads.findIndex(l=>l.id===editId)] = leadFromRow(data);
+    closeFormModal(); renderLeads();
+    showToast('Lead bijgewerkt');
+    return;
+  }
+  payload.org_id = currentOrg.id;
+  payload.created_by = currentUser.id;
+  payload.owner_id = currentUser.id;
+  const { data, error } = await sb.from('leads').insert(payload).select().single();
+  if(error){ showToast('Aanmaken mislukt: '+friendlyDbError(error)); return; }
+  leads.unshift(leadFromRow(data));
+  closeFormModal(); renderLeads();
+  document.getElementById('navCountLeads').textContent = leads.filter(l=>!l.converted).length;
+  showToast('Lead "'+name.value.trim()+'" toegevoegd');
+}
+async function deleteLead(id){
+  const rec = leads.find(l=>l.id===id);
+  if(!rec) return;
+  if(!confirm('Lead "'+rec.name+'" verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  const { error } = await sb.from('leads').delete().eq('id', uuidFor('leads', id));
+  if(error){ showToast('Verwijderen mislukt: '+friendlyDbError(error)); return; }
+  leads.splice(leads.findIndex(l=>l.id===id), 1);
+  closeFormModal(); renderLeads();
+  document.getElementById('navCountLeads').textContent = leads.filter(l=>!l.converted).length;
+  showToast('Lead verwijderd');
+}
+async function convertLeadRow(id){
+  const rec = leads.find(l=>l.id===id);
+  if(!rec || rec.converted) return;
+  const makeDeal = confirm('Lead "'+rec.name+'" converteren naar een contact. Ook direct een deal aanmaken?\n\nOK = contact + deal\nAnnuleren = alleen contact');
+  const { data, error } = await sb.rpc('convert_lead', {
+    p_lead_id: uuidFor('leads', id), p_create_deal: makeDeal, p_deal_amount: 0, p_stage_id: null
+  });
+  if(error){ showToast('Converteren mislukt: '+friendlyDbError(error)); return; }
+  await loadAllData();
+  renderLeads(); renderContacts(); renderDealsList(); renderKanban(); renderDashboard(); renderCompanies();
+  document.getElementById('navCountLeads').textContent = leads.filter(l=>!l.converted).length;
+  document.getElementById('navCountContacts').textContent = contacts.length;
+  document.getElementById('navCountDeals').textContent = deals.length;
+  showToast('Lead geconverteerd naar contact'+(makeDeal?' en deal':''));
+  const row = Array.isArray(data) ? data[0] : data;
+  if(row && row.contact_id){
+    const localContactId = _idMaps.contacts.toLocal[row.contact_id];
+    if(localContactId) openContact(localContactId);
+  }
+}
+function exportLeadsCSV(){
+  downloadCSV('leads.csv', ['Naam','Bedrijf','E-mail','Status','Bron','Score'], leads.map(l=>[l.name,l.company,l.email,LEAD_STATUS_LABEL[l.status]||l.status,l.source,l.score]));
+}
 
 function cdCurrentEmail(){ const c = contacts.find(x=>x.id===currentContactId); return c ? c.email : ''; }
 function cdCurrentPhone(){ const c = contacts.find(x=>x.id===currentContactId); return c ? c.phone.replace(/[^\d+]/g,'') : ''; }
@@ -1964,10 +2248,14 @@ const cmdkIcons = {
   invoice:'<path d="M7 3h10l2 2v16l-3-2-3 2-3-2-3 2V5z"/>',
   contract:'<path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/>',
   task:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.3 2.3L16 9"/>',
+  company:'<rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 8h6v13h-6"/>',
+  lead:'<path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4z"/>',
 };
 function buildCmdkIndex(){
   const items = [...cmdkNavCommands];
+  companies.forEach(c=> items.push({title:c.name, sub:c.domain||'Bedrijf', group:'Bedrijven', icon:'company', action:()=>openFormModal('company', c.id)}));
   contacts.forEach(c=> items.push({title:c.name, sub:c.company+' · '+c.tag, group:'Contacten', icon:'contact', action:()=>openContact(c.id)}));
+  leads.filter(l=>!l.converted).forEach(l=> items.push({title:l.name, sub:(l.company||'Lead')+' · '+(LEAD_STATUS_LABEL[l.status]||l.status), group:'Leads', icon:'lead', action:()=>openFormModal('lead', l.id)}));
   deals.forEach(d=> items.push({title:d.company, sub:fmtEur(d.amount)+' · '+stageInfo(d.stage).name, group:'Deals', icon:'deal', action:()=>openDeal(d.id)}));
   invoices.forEach(inv=>{ const c = contacts.find(x=>x.id===inv.contactId); items.push({title:inv.number, sub:c.company+' · '+inv.status, group:'Facturen', icon:'invoice', action:()=>openInvoice(inv.id)}); });
   contracts.forEach(c=> items.push({title:c.company, sub:c.type+' · '+c.status, group:'Contracten', icon:'contract', action:()=>openContract(c.id)}));
@@ -2071,7 +2359,7 @@ function validateField(el, msg){
 function computeInitials(name){ return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 
 function openFormModal(type, editId){
-  const builders = { contact:buildContactForm, deal:buildDealForm, invoice:buildInvoiceForm, contract:buildContractForm };
+  const builders = { contact:buildContactForm, deal:buildDealForm, invoice:buildInvoiceForm, contract:buildContractForm, company:buildCompanyForm, lead:buildLeadForm };
   const builder = builders[type];
   if(!builder) return;
   document.getElementById('formBox').innerHTML = builder(editId || null);
@@ -2760,7 +3048,7 @@ async function persistCollection(){ /* real writes for contacts/deals/tasks/stag
    wires onclick="openContact(123)" etc. as bare, unquoted numbers, so we
    keep that contract intact with a client-side integer alias). ---- */
 let _nextLocalId = 1;
-const _idMaps = { contacts:{toUuid:{}, toLocal:{}}, deals:{toUuid:{}, toLocal:{}}, tasks:{toUuid:{}, toLocal:{}}, leads:{toUuid:{}, toLocal:{}} };
+const _idMaps = { contacts:{toUuid:{}, toLocal:{}}, deals:{toUuid:{}, toLocal:{}}, tasks:{toUuid:{}, toLocal:{}}, leads:{toUuid:{}, toLocal:{}}, companies:{toUuid:{}, toLocal:{}} };
 function localIdFor(kind, uuid){
   const m = _idMaps[kind];
   if(m.toLocal[uuid]) return m.toLocal[uuid];
@@ -2809,6 +3097,7 @@ function dealFromRow(row){
     id: localIdFor('deals', row.id), company: row.company,
     contactId: row.contact_id ? localIdFor('contacts', row.contact_id) : null,
     amount: Number(row.amount), stage: stage ? stage.id : (stages[0] ? stages[0].id : ''),
+    status: row.status,
     prob: row.probability, close: fmtDateNL(row.expected_close), createdAt: fmtDateNL(row.created_at ? row.created_at.slice(0,10) : null)
   };
 }
@@ -2816,6 +3105,23 @@ function taskFromRow(row){
   return {
     id: localIdFor('tasks', row.id), title: row.title, due: row.due_date ? fmtDateNL(row.due_date) : '—',
     prio: row.priority, done: row.done, tag: row.tag||''
+  };
+}
+function companyFromRow(row){
+  const p = paletteFor(row.id);
+  return {
+    id: localIdFor('companies', row.id), name: row.name, domain: row.domain||'', phone: row.phone||'',
+    address: row.address||'', since: fmtSinceNL(row.created_at), color: p.bg, text: p.text,
+    initials: computeInitials(row.name)
+  };
+}
+const LEAD_STATUS_LABEL = {new:'Nieuw', contacted:'Gecontacteerd', qualified:'Gekwalificeerd', unqualified:'Ongekwalificeerd', converted:'Geconverteerd'};
+function leadFromRow(row){
+  const p = paletteFor(row.id);
+  return {
+    id: localIdFor('leads', row.id), name: row.name, company: row.company||'', email: row.email||'',
+    phone: row.phone||'', source: row.source||'', status: row.status, score: row.score,
+    initials: computeInitials(row.name), color: p.bg, text: p.text, converted: row.status==='converted'
   };
 }
 
@@ -2850,38 +3156,73 @@ function showAuthHint(msg){
   document.getElementById('authError').classList.remove('show');
 }
 
+function friendlyAuthError(error){
+  const msg = (error && error.message) || '';
+  if(/invalid login credentials/i.test(msg)) return 'E-mailadres of wachtwoord onjuist.';
+  if(/email not confirmed/i.test(msg)) return 'Bevestig eerst je e-mailadres via de link die we je gestuurd hebben.';
+  if(/user already registered|already been registered|email address .* already/i.test(msg)) return 'Er bestaat al een account met dit e-mailadres. Probeer in te loggen.';
+  if(/password should be at least|password.*(least|weak|short)/i.test(msg)) return 'Wachtwoord moet minimaal 8 tekens bevatten.';
+  if(/unable to validate email|invalid email/i.test(msg)) return 'Vul een geldig e-mailadres in.';
+  if(/rate limit|too many requests/i.test(msg)) return 'Te veel pogingen. Wacht even en probeer het opnieuw.';
+  if(/failed to fetch|networkerror|load failed/i.test(msg)) return 'Geen verbinding met de server. Controleer je internetverbinding.';
+  return msg || 'Er ging iets mis. Probeer het opnieuw.';
+}
 async function handleLogin(e){
   e.preventDefault();
+  hideAuthMessages();
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
+  if(!email || !password){ showAuthError('Vul e-mailadres en wachtwoord in.'); return false; }
   const btn = document.getElementById('loginSubmitBtn');
   btn.disabled = true; btn.textContent = 'Bezig…';
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  btn.disabled = false; btn.textContent = 'Inloggen';
-  if(error){ showAuthError(error.message === 'Invalid login credentials' ? 'E-mailadres of wachtwoord onjuist.' : error.message); }
+  try{
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) showAuthError(friendlyAuthError(error));
+  } catch(err){
+    showAuthError(friendlyAuthError(err));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Inloggen';
+  }
   return false;
 }
 async function handleSignup(e){
   e.preventDefault();
+  hideAuthMessages();
   const full_name = document.getElementById('signupName').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
   const password = document.getElementById('signupPassword').value;
   const org_name = document.getElementById('signupOrgName').value.trim();
+  if(!full_name || !email || !password){ showAuthError('Vul alle verplichte velden in.'); return false; }
+  if(password.length < 8){ showAuthError('Wachtwoord moet minimaal 8 tekens bevatten.'); return false; }
   const invite_token = getInviteTokenFromUrl();
   const meta = { full_name };
   if(invite_token) meta.invite_token = invite_token; else if(org_name) meta.org_name = org_name;
   const btn = document.getElementById('signupSubmitBtn');
   btn.disabled = true; btn.textContent = 'Bezig…';
-  const { data, error } = await sb.auth.signUp({ email, password, options: { data: meta } });
-  btn.disabled = false; btn.textContent = 'Account aanmaken';
-  if(error){ showAuthError(error.message); return false; }
-  if(!data.session){
-    showAuthHint('Check je e-mail om je account te bevestigen en log daarna in.');
-    switchAuthTab('login');
+  try{
+    const { data, error } = await sb.auth.signUp({ email, password, options: { data: meta } });
+    if(error){ showAuthError(friendlyAuthError(error)); return false; }
+    if(!data.session){
+      showAuthHint('Check je e-mail om je account te bevestigen en log daarna in.');
+      switchAuthTab('login');
+    }
+  } catch(err){
+    showAuthError(friendlyAuthError(err));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Account aanmaken';
   }
   return false;
 }
-async function handleLogout(){ await sb.auth.signOut(); }
+function hideAuthMessages(){
+  const err = document.getElementById('authError'), hint = document.getElementById('authHint');
+  if(err) err.classList.remove('show');
+  if(hint) hint.classList.remove('show');
+}
+async function handleLogout(){
+  const menu = document.getElementById('profileMenu');
+  if(menu) menu.classList.remove('show');
+  await sb.auth.signOut();
+}
 
 async function applyInvitePreview(){
   const token = getInviteTokenFromUrl();
@@ -2910,17 +3251,21 @@ async function loadOrgContext(){
 }
 
 async function loadAllData(){
-  const [stagesRes, contactsRes, dealsRes, tasksRes] = await Promise.all([
+  const [stagesRes, contactsRes, dealsRes, tasksRes, companiesRes, leadsRes] = await Promise.all([
     sb.from('stages').select('*').order('position'),
     sb.from('contacts').select('*').order('created_at', {ascending:false}),
     sb.from('deals').select('*').order('created_at', {ascending:false}),
     sb.from('tasks').select('*').order('created_at', {ascending:false}),
+    sb.from('companies').select('*').order('created_at', {ascending:false}),
+    sb.from('leads').select('*').order('created_at', {ascending:false}),
   ]);
   stages.length = 0; (stagesRes.data||[]).forEach(r=>stages.push(stageFromRow(r)));
   rebuildStagesIndex();
   contacts.length = 0; (contactsRes.data||[]).forEach(r=>contacts.push(contactFromRow(r)));
   deals.length = 0; (dealsRes.data||[]).forEach(r=>deals.push(dealFromRow(r)));
   tasks.length = 0; (tasksRes.data||[]).forEach(r=>tasks.push(taskFromRow(r)));
+  companies.length = 0; (companiesRes.data||[]).forEach(r=>companies.push(companyFromRow(r)));
+  leads.length = 0; (leadsRes.data||[]).forEach(r=>leads.push(leadFromRow(r)));
 }
 
 function updateProfileChrome(){
@@ -3007,7 +3352,9 @@ async function fetchEntityTimeline(entityType, entityUuid){
 async function initAll(){
   await loadAllData();
   renderDashboard();
+  renderCompanies();
   renderContacts();
+  renderLeads();
   renderDealsList();
   renderKanban();
   renderTasks();
@@ -3020,8 +3367,11 @@ async function initAll(){
   renderDataCheck();
   document.getElementById('navCountContacts').textContent = contacts.length;
   document.getElementById('navCountDeals').textContent = deals.length;
+  document.getElementById('navCountCompanies').textContent = companies.length;
+  document.getElementById('navCountLeads').textContent = leads.filter(l=>!l.converted).length;
   fetchAndRenderTeam();
   fetchAndRenderNotifications();
+  renderRecentActivity();
   updateProfileChrome();
   runEntranceAnimations(document.getElementById('view-dashboard'), 'dashboard');
 }
@@ -3030,12 +3380,16 @@ async function showApp(){
   document.getElementById('authLoading').style.display = 'none';
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appRoot').style.display = 'flex';
+  const overlay = document.getElementById('appLoadingOverlay');
+  overlay.classList.remove('hide');
   try{
     await loadOrgContext();
     await initAll();
   } catch(err){
     console.error(err);
     showToast('Kon organisatie niet laden: ' + friendlyDbError(err));
+  } finally {
+    overlay.classList.add('hide');
   }
 }
 function showAuth(){
