@@ -279,7 +279,7 @@
 
   /* ---------- PANELS ---------- */
   .content-grid{ display:grid; grid-template-columns:1.65fr 1fr; gap:16px; margin-bottom:16px; align-items:start; }
-  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:14px; }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow-x:auto; }
   .panel-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border-soft); gap:10px; flex-wrap:wrap; }
   .panel-title{ font-family:'Inter',sans-serif; font-size:16px; font-weight:700; }
   .panel-actions{ display:flex; align-items:center; gap:8px; }
@@ -379,6 +379,7 @@
   .kcard-foot{ display:flex; align-items:center; justify-content:space-between; }
   .kcard-avatar{ width:20px; height:20px; border-radius:6px; background:var(--accent-dim); color:var(--on-accent); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; }
   .kcard-date{ font-size:10px; color:var(--muted-2); font-family:'JetBrains Mono',monospace; }
+  .kcard-stage-select{ width:100%; margin-top:8px; font-size:11px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--panel); color:var(--muted); font-family:'Inter',sans-serif; }
 
   /* ---------- TASKS ---------- */
   .task-add{ display:flex; gap:8px; padding:16px 20px; border-bottom:1px solid var(--border-soft); flex-wrap:wrap; }
@@ -502,6 +503,10 @@
     .pipeline-cols, .kanban{ grid-template-columns:repeat(2,1fr); }
     .team-grid{ grid-template-columns:repeat(2,1fr); }
     .settings-layout{ grid-template-columns:1fr; }
+  }
+  @media (max-width: 900px){
+    .kanban{ grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:82%; overflow-x:auto; padding-bottom:6px; }
+    .pipeline-cols{ grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:70%; overflow-x:auto; padding-bottom:6px; }
   }
 
   /* ---------- AUTH SCREEN ---------- */
@@ -653,7 +658,7 @@
         <div class="sub">Onbeperkt contacten en geautomatiseerde pipelines voor je team.</div>
         <button class="btn-mini">Upgraden</button>
       </div>
-      <div class="user-row" id="profileRow" onclick="toggleProfileMenu(event)" style="cursor:pointer; position:relative;">
+      <div class="user-row" id="profileRow" role="button" tabindex="0" aria-label="Profielmenu" onclick="toggleProfileMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleProfileMenu(event);}" style="cursor:pointer; position:relative;">
         <div class="avatar" id="profileAvatar">NL</div>
         <div>
           <div class="who" id="profileOrgName">—</div>
@@ -671,17 +676,17 @@
   <!-- MAIN -->
   <main class="main">
     <div class="topbar">
-      <div class="icon-btn hamburger-btn" onclick="toggleMobileSidebar()">
+      <div class="icon-btn hamburger-btn" role="button" tabindex="0" aria-label="Menu openen" onclick="toggleMobileSidebar()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); this.click();}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg>
       </div>
       <div class="search-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
-        <input type="text" id="globalSearchInput" placeholder="Zoek contacten, deals, bedrijven..." autocomplete="off">
+        <input type="text" id="globalSearchInput" aria-label="Zoeken" placeholder="Zoek contacten, deals, bedrijven..." autocomplete="off">
         <span class="cmdk-hint" onclick="openCmdk(event)">⌘K</span>
         <div class="search-dropdown" id="searchDropdown"></div>
       </div>
       <div class="top-actions">
-        <div class="icon-btn" id="notifBtn" onclick="toggleNotif(event)">
+        <div class="icon-btn" id="notifBtn" role="button" tabindex="0" aria-label="Meldingen" onclick="toggleNotif(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleNotif(event);}">
           <div class="dot" id="notifDot" style="display:none;"></div>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
           <div class="notif-dropdown" id="notifDropdown">
@@ -691,7 +696,7 @@
             </div>
           </div>
         </div>
-        <div class="icon-btn" onclick="showView('calendar')">
+        <div class="icon-btn" role="button" tabindex="0" aria-label="Naar kalender" onclick="showView('calendar')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); showView('calendar');}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>
         </div>
         <button class="btn-primary" id="primaryActionBtn" onclick="primaryAction()">+ Nieuwe deal</button>
@@ -852,7 +857,7 @@
           <div class="panel-head"><div class="panel-title">Tijdlijn &amp; notities</div></div>
           <div class="activity-list" id="cdTimeline"></div>
           <div class="note-input-row">
-            <input type="text" id="cdNoteInput" placeholder="Notitie toevoegen...">
+            <input type="text" id="cdNoteInput" placeholder="Notitie toevoegen..." onkeydown="if(event.key==='Enter') addContactNote();">
             <button class="btn-primary" onclick="addContactNote()">Toevoegen</button>
           </div>
         </div>
@@ -861,9 +866,13 @@
             <div class="panel-head"><div class="panel-title">Details</div></div>
             <div class="info-list" id="cdInfo"></div>
           </div>
-          <div class="panel">
-            <div class="panel-head"><div class="panel-title">Gekoppelde deals</div></div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><div class="panel-title">Gekoppelde deals</div><button class="btn-ghost" onclick="openDealModalForContact(currentContactId)">+ Deal</button></div>
             <div id="cdDeals" style="padding:6px 8px 14px;"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Taken</div><button class="btn-ghost" onclick="openTaskModalForContact(currentContactId)">+ Taak</button></div>
+            <div class="task-list" id="cdTasks"></div>
           </div>
         </div>
       </div>
@@ -947,7 +956,7 @@
           <div id="ddTabActiviteit" style="display:none;">
             <div class="activity-list" id="ddTimeline"></div>
             <div class="note-input-row">
-              <input type="text" id="ddNoteInput" placeholder="Notitie toevoegen...">
+              <input type="text" id="ddNoteInput" placeholder="Notitie toevoegen..." onkeydown="if(event.key==='Enter') addDealNote();">
               <button class="btn-primary" onclick="addDealNote()">Toevoegen</button>
             </div>
           </div>
@@ -961,7 +970,7 @@
             <div id="ddContactCard" style="padding:14px 20px;"></div>
           </div>
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">Volgende stappen</div></div>
+            <div class="panel-head"><div class="panel-title">Volgende stappen</div><button class="btn-ghost" onclick="openTaskModalForDeal(currentDealId)">+ Taak</button></div>
             <div class="task-list" id="ddTasks"></div>
           </div>
         </div>
@@ -980,7 +989,7 @@
       </div>
       <div class="panel">
         <div class="task-add">
-          <input type="text" id="newTaskInput" placeholder="Nieuwe taak toevoegen...">
+          <input type="text" id="newTaskInput" placeholder="Nieuwe taak toevoegen..." onkeydown="if(event.key==='Enter') addTask();">
           <select id="newTaskPrio"><option value="hoog">Hoog</option><option value="normaal" selected>Normaal</option><option value="laag">Laag</option></select>
           <button class="btn-primary" onclick="addTask()">+ Toevoegen</button>
         </div>
@@ -1061,7 +1070,7 @@
     <section id="view-team" class="view">
       <div class="page-head">
         <div><div class="page-title">Team</div><div class="page-sub">5 teamleden</div></div>
-        <button class="btn-primary" onclick="inviteTeammate()">+ Teamlid uitnodigen</button>
+        <button class="btn-primary" id="teamInviteBtn" onclick="inviteTeammate()">+ Teamlid uitnodigen</button>
       </div>
       <div class="team-grid" id="teamGrid"></div>
     </section>
@@ -1078,11 +1087,12 @@
         </div>
         <div class="panel">
           <div class="settings-panel" id="stab-profiel">
+            <div class="auth-hint" id="orgProfileMemberNote" style="display:none;">Alleen eigenaren en beheerders kunnen het bedrijfsprofiel wijzigen.</div>
             <div class="form-row"><label>Bedrijfsnaam</label><input type="text" id="orgNameInput" value=""></div>
             <div class="form-row"><label>E-mailadres</label><input type="email" value="" placeholder="jouw@nextlayer.nl"></div>
             <div class="form-row"><label>Website</label><input type="text" value="" placeholder="www.nextlayer.nl"></div>
             <div class="form-row"><label>Tijdzone</label><select><option>Europe/Amsterdam (UTC+2)</option><option>Europe/London (UTC+1)</option></select></div>
-            <button class="btn-primary" onclick="saveOrgProfile()">Opslaan</button>
+            <button class="btn-primary" id="orgSaveBtn" onclick="saveOrgProfile()">Opslaan</button>
           </div>
           <div class="settings-panel" id="stab-pipeline" style="display:none;">
             <div id="stageEditList"></div>
@@ -1364,7 +1374,7 @@ Nextlayer B.V.
 </div>
 
 <div class="cmdk-overlay" id="cmdkOverlay" onmousedown="if(event.target===this) closeCmdk()">
-  <div class="cmdk-modal">
+  <div class="cmdk-modal" role="dialog" aria-modal="true" aria-label="Zoeken en snelle acties">
     <div class="cmdk-input-row">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
       <input type="text" id="cmdkInput" placeholder="Typ een commando of zoek naar contacten, deals, facturen..." autocomplete="off">
@@ -1374,8 +1384,9 @@ Nextlayer B.V.
   </div>
 </div>
 
+<datalist id="companyNamesList"></datalist>
 <div class="modal-overlay" id="formOverlay" onmousedown="if(event.target===this) closeFormModal()">
-  <div class="modal-box" id="formBox"></div>
+  <div class="modal-box" id="formBox" role="dialog" aria-modal="true"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1641,6 +1652,8 @@ function gotoContactsPage(p){ contactsPage = p; renderContacts(); }
 
 /* ================= COMPANIES ================= */
 function renderCompanies(){
+  const datalist = document.getElementById('companyNamesList');
+  if(datalist) datalist.innerHTML = companies.map(c=>'<option value="'+escAttr(c.name)+'">').join('');
   const q = (document.getElementById('companiesFilterInput').value||'').toLowerCase();
   const list = companies.filter(c=>c.name.toLowerCase().includes(q) || c.domain.toLowerCase().includes(q));
   document.getElementById('companiesCount').textContent = list.length + ' bedrijven';
@@ -1737,7 +1750,7 @@ function buildLeadForm(editId){
   '<div class="modal-body">'+
     '<div class="field-row"><label>Naam <span class="req">*</span></label><input type="text" id="ldName" value="'+escAttr(rec?rec.name:'')+'"><div class="field-error-msg">Vul een naam in</div></div>'+
     '<div class="field-row two-col">'+
-      '<div><label>Bedrijf</label><input type="text" id="ldCompany" value="'+escAttr(rec?rec.company:'')+'"></div>'+
+      '<div><label>Bedrijf</label><input type="text" id="ldCompany" list="companyNamesList" value="'+escAttr(rec?rec.company:'')+'"></div>'+
       '<div><label>E-mail</label><input type="email" id="ldEmail" value="'+escAttr(rec?rec.email:'')+'"></div>'+
     '</div>'+
     '<div class="field-row two-col">'+
@@ -1841,8 +1854,17 @@ async function openContact(id){
     '<div class="activity-item" style="cursor:pointer;" onclick="openDeal('+d.id+')"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="act-text"><b>'+esc(d.company)+'</b></div><div class="act-time">'+fmtEur(d.amount)+' · '+esc(stageInfo(d.stage).name)+'</div></div></div>'
   ).join('') : '<div class="sd-empty">Geen deals gekoppeld.</div>';
 
+  renderContactDetailTasks();
+
   showView('contact-detail');
   document.getElementById('cdTimeline').innerHTML = await fetchEntityTimeline('contact', uuidFor('contacts', id));
+}
+function renderContactDetailTasks(){
+  if(currentContactId==null) return;
+  const relTasks = tasks.filter(t=>t.contactId===currentContactId);
+  document.getElementById('cdTasks').innerHTML = relTasks.length ? relTasks.map(t=>
+    '<div class="task-item '+(t.done?'done':'')+'"><div class="task-check '+(t.done?'done':'')+'" onclick="toggleTask('+t.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div><div class="task-title" style="cursor:pointer;" onclick="openFormModal(\'task\','+t.id+')">'+esc(t.title)+'</div><div class="task-due">'+t.due+'</div></div>'
+  ).join('') : '<div class="sd-empty">Geen taken gekoppeld.</div>';
 }
 async function addContactNote(){
   const input = document.getElementById('cdNoteInput');
@@ -1889,9 +1911,12 @@ function renderKanban(){
       '<div class="kcol-total">'+fmtEur(total)+'</div>'+
       inStage.map(d=>{
         const c = contacts.find(x=>x.id===d.contactId) || {initials:'—'};
+        const stageSelect = '<select class="kcard-stage-select" onclick="event.stopPropagation()" onchange="moveDealToStage('+d.id+',this.value,this)" aria-label="Fase wijzigen">'+stages.map(s2=>'<option value="'+s2.id+'" '+(s2.id===s.id?'selected':'')+'>'+escAttr(s2.name)+'</option>').join('')+'</select>';
         return '<div class="kcard" id="kcard-'+d.id+'" draggable="true" ondragstart="onDragStart(event, '+d.id+')" ondragend="onDragEnd(event)" onclick="openDeal('+d.id+')">'+
           '<div class="kname">'+esc(d.company)+'</div><div class="kamt">'+fmtEur(d.amount)+'</div>'+
-          '<div class="kcard-foot"><div class="kcard-avatar">'+c.initials+'</div><div class="kcard-date">'+d.close+'</div></div></div>';
+          '<div class="kcard-foot"><div class="kcard-avatar">'+c.initials+'</div><div class="kcard-date">'+d.close+'</div></div>'+
+          stageSelect+
+        '</div>';
       }).join('') +
       '</div>';
   }).join('');
@@ -1904,22 +1929,7 @@ function onDragLeave(e){ e.currentTarget.classList.remove('dragover'); }
 async function onDrop(e, stageId){
   e.preventDefault();
   e.currentTarget.classList.remove('dragover');
-  const deal = deals.find(d=>d.id===dragDealId);
-  if(deal){
-    const prevStage = deal.stage;
-    deal.stage = stageId;
-    renderKanban(); renderDealsList(); renderDashboard();
-    const landed = document.getElementById('kcard-'+deal.id);
-    if(landed){ landed.classList.add('landed'); setTimeout(()=>landed.classList.remove('landed'), 350); }
-    const stageObj = stages.find(s=>s.id===stageId);
-    const { error } = await sb.from('deals').update({stage_id: stageObj ? stageObj._dbId : null}).eq('id', uuidFor('deals', deal.id));
-    if(error){
-      deal.stage = prevStage; renderKanban(); renderDealsList(); renderDashboard();
-      showToast('Verplaatsen mislukt: '+friendlyDbError(error));
-      return;
-    }
-    showToast(deal.company+' verplaatst naar '+stageInfo(stageId).name);
-  }
+  if(dragDealId!=null) await moveDealToStage(dragDealId, stageId);
 }
 
 /* ================= DEAL DETAIL ================= */
@@ -1950,21 +1960,46 @@ async function openDeal(id){
 
   document.getElementById('ddTimeline').innerHTML = '<div class="sd-empty">Laden…</div>';
 
-  const relTasks = tasks.filter(t=>t.tag===d.company || t.tag===c.company).slice(0,3);
-  document.getElementById('ddTasks').innerHTML = relTasks.length ? relTasks.map(t=>
-    '<div class="task-item"><div class="task-check '+(t.done?'done':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div><div class="task-title">'+esc(t.title)+'</div></div>'
-  ).join('') : '<div class="sd-empty">Geen taken gekoppeld.</div>';
+  renderDealDetailTasks();
 
   switchDealTab('overzicht');
   showView('deal-detail');
   document.getElementById('ddTimeline').innerHTML = await fetchEntityTimeline('deal', uuidFor('deals', id));
 }
+function renderDealDetailTasks(){
+  if(currentDealId==null) return;
+  const relTasks = tasks.filter(t=>t.dealId===currentDealId);
+  document.getElementById('ddTasks').innerHTML = relTasks.length ? relTasks.map(t=>
+    '<div class="task-item '+(t.done?'done':'')+'"><div class="task-check '+(t.done?'done':'')+'" onclick="toggleTask('+t.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div><div class="task-title" style="cursor:pointer;" onclick="openFormModal(\'task\','+t.id+')">'+esc(t.title)+'</div><div class="task-due">'+t.due+'</div></div>'
+  ).join('') : '<div class="sd-empty">Geen taken gekoppeld.</div>';
+}
+async function moveDealToStage(localId, newStageKey, selectEl){
+  const deal = deals.find(d=>d.id===localId);
+  if(!deal || deal.stage===newStageKey) return;
+  if(newStageKey==='verloren' && !confirm('Deal "'+deal.company+'" markeren als verloren?')){ if(selectEl) selectEl.value = deal.stage; return; }
+  const prevStage = deal.stage;
+  deal.stage = newStageKey;
+  renderKanban(); renderDealsList(); renderDashboard();
+  const landed = document.getElementById('kcard-'+localId);
+  if(landed){ landed.classList.add('landed'); setTimeout(()=>landed.classList.remove('landed'), 350); }
+  const stageObj = stages.find(s=>s.id===newStageKey);
+  const { error } = await sb.from('deals').update({stage_id: stageObj ? stageObj._dbId : null}).eq('id', uuidFor('deals', localId));
+  if(error){
+    deal.stage = prevStage; renderKanban(); renderDealsList(); renderDashboard();
+    showToast('Verplaatsen mislukt: '+friendlyDbError(error));
+    return;
+  }
+  showToast(deal.company+' verplaatst naar '+stageInfo(newStageKey).name);
+}
 async function changeDealStage(){
   const d = deals.find(x=>x.id===currentDealId);
-  const newStageKey = document.getElementById('ddStageSelect').value;
+  const sel = document.getElementById('ddStageSelect');
+  const newStageKey = sel.value;
+  if(newStageKey === d.stage) return;
+  if(newStageKey==='verloren' && !confirm('Deal "'+d.company+'" markeren als verloren?')){ sel.value = d.stage; return; }
   const stageObj = stages.find(s=>s.id===newStageKey);
   const { error } = await sb.from('deals').update({stage_id: stageObj ? stageObj._dbId : null}).eq('id', uuidFor('deals', d.id));
-  if(error){ showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
+  if(error){ sel.value = d.stage; showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
   d.stage = newStageKey;
   renderKanban(); renderDealsList(); renderDashboard();
   const c = contacts.find(x=>x.id===d.contactId);
@@ -2006,12 +2041,12 @@ function renderTasks(){
     '<div class="task-item '+(t.done?'done':'')+'">'+
       '<div class="task-check '+(t.done?'done':'')+'" onclick="toggleTask('+t.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>'+
       '<span class="prio-dot" style="background:'+prioColor[t.prio]+';"></span>'+
-      '<div class="task-title">'+esc(t.title)+'</div>'+
+      '<div class="task-title" style="cursor:pointer;" onclick="openFormModal(\'task\','+t.id+')" title="Bewerken">'+esc(t.title)+'</div>'+
       '<span class="task-tag">'+esc(t.tag)+'</span>'+
       '<div class="task-due">'+t.due+'</div>'+
       '<button class="modal-close" style="width:22px; height:22px; flex-shrink:0;" onclick="deleteTask('+t.id+')" title="Verwijderen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'+
     '</div>'
-  ).join('') || '<div class="sd-empty">Geen taken in deze weergave.</div>';
+  ).join('') || '<div class="sd-empty">Geen taken in deze weergave. <a href="#" onclick="document.getElementById(\'newTaskInput\').focus(); return false;" style="color:var(--accent); font-weight:600;">Voeg er een toe</a></div>';
   document.getElementById('tasksCount').textContent = tasks.filter(t=>!t.done).length + ' openstaande taken';
   document.getElementById('navCountTasks').textContent = tasks.filter(t=>!t.done).length;
 }
@@ -2019,16 +2054,87 @@ async function toggleTask(id){
   const t = tasks.find(x=>x.id===id);
   const prev = t.done;
   t.done = !t.done;
-  renderTasks();
+  renderTasks(); renderDealDetailTasks(); renderContactDetailTasks();
   const { error } = await sb.from('tasks').update({done: t.done}).eq('id', uuidFor('tasks', id));
-  if(error){ t.done = prev; renderTasks(); showToast('Bijwerken mislukt: '+friendlyDbError(error)); }
+  if(error){ t.done = prev; renderTasks(); renderDealDetailTasks(); renderContactDetailTasks(); showToast('Bijwerken mislukt: '+friendlyDbError(error)); }
 }
 async function deleteTask(id){
+  if(!confirm('Deze taak verwijderen?')) return;
   const { error } = await sb.from('tasks').delete().eq('id', uuidFor('tasks', id));
   if(error){ showToast('Verwijderen mislukt: '+friendlyDbError(error)); return; }
   tasks = tasks.filter(t=>t.id!==id);
-  renderTasks();
+  closeFormModal();
+  renderTasks(); renderDealDetailTasks(); renderContactDetailTasks();
+  document.getElementById('navCountTasks').textContent = tasks.filter(t=>!t.done).length;
   showToast('Taak verwijderd');
+}
+let _taskModalPreset = { contactId: null, dealId: null };
+function openTaskModalForContact(contactId){
+  _taskModalPreset = { contactId, dealId: null };
+  openFormModal('task');
+}
+function openTaskModalForDeal(dealId){
+  _taskModalPreset = { contactId: null, dealId };
+  openFormModal('task');
+}
+function taskLinkLabel(t){
+  if(t.dealId){ const d = deals.find(x=>x.id===t.dealId); if(d) return '⬈ '+d.company; }
+  if(t.contactId){ const c = contacts.find(x=>x.id===t.contactId); if(c) return '⬈ '+c.name; }
+  return '';
+}
+function buildTaskForm(editId){
+  const rec = editId ? tasks.find(t=>t.id===editId) : null;
+  const preset = rec ? { contactId: rec.contactId, dealId: rec.dealId } : _taskModalPreset;
+  _taskModalPreset = { contactId: null, dealId: null };
+  return '<div class="modal-head"><div class="modal-title">'+(rec?'Taak bewerken':'Nieuwe taak')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
+  '<div class="modal-body">'+
+    '<div class="field-row"><label>Titel <span class="req">*</span></label><input type="text" id="tkTitle" value="'+escAttr(rec?rec.title:'')+'"><div class="field-error-msg">Vul een titel in</div></div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Prioriteit</label><select id="tkPrio"><option value="hoog" '+(rec&&rec.prio==='hoog'?'selected':'')+'>Hoog</option><option value="normaal" '+((!rec||rec.prio==='normaal')?'selected':'')+'>Normaal</option><option value="laag" '+(rec&&rec.prio==='laag'?'selected':'')+'>Laag</option></select></div>'+
+      '<div><label>Deadline</label><input type="date" id="tkDue" value="'+(rec&&rec._dueRaw?rec._dueRaw:'')+'"></div>'+
+    '</div>'+
+    '<div class="field-row"><label>Gekoppeld contact</label><select id="tkContact">'+contactOptionsHTML(preset.contactId)+'</select></div>'+
+    '<div class="field-row"><label>Gekoppelde deal</label><select id="tkDeal">'+dealOptionsHTML(preset.dealId)+'</select></div>'+
+  '</div>'+
+  '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteTask('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitTaskForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Taak toevoegen')+'</button></div>';
+}
+async function submitTaskForm(editId){
+  const titleEl = document.getElementById('tkTitle');
+  if(!validateField(titleEl, 'Vul een titel in')) return;
+  const contactLocalId = parseInt(document.getElementById('tkContact').value) || null;
+  const dealLocalId = parseInt(document.getElementById('tkDeal').value) || null;
+  const contactUuid = contactLocalId ? uuidFor('contacts', contactLocalId) : null;
+  const dealUuid = dealLocalId ? uuidFor('deals', dealLocalId) : null;
+  const linkedDeal = dealLocalId ? deals.find(d=>d.id===dealLocalId) : null;
+  const linkedContact = contactLocalId ? contacts.find(c=>c.id===contactLocalId) : null;
+  const payload = {
+    title: titleEl.value.trim(),
+    priority: document.getElementById('tkPrio').value,
+    due_date: document.getElementById('tkDue').value || null,
+    contact_id: contactUuid, deal_id: dealUuid,
+    tag: linkedDeal ? linkedDeal.company : (linkedContact ? linkedContact.company : 'Nieuw')
+  };
+  if(editId){
+    const { data, error } = await sb.from('tasks').update(payload).eq('id', uuidFor('tasks', editId)).select().single();
+    if(error){ showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
+    tasks[tasks.findIndex(t=>t.id===editId)] = taskFromRow(data);
+    closeFormModal(); renderTasks();
+    if(document.getElementById('view-deal-detail').classList.contains('active')) renderDealDetailTasks();
+    if(document.getElementById('view-contact-detail').classList.contains('active')) renderContactDetailTasks();
+    showToast('Taak bijgewerkt');
+    return;
+  }
+  payload.org_id = currentOrg.id;
+  payload.created_by = currentUser.id;
+  payload.done = false;
+  const { data, error } = await sb.from('tasks').insert(payload).select().single();
+  if(error){ showToast('Aanmaken mislukt: '+friendlyDbError(error)); return; }
+  tasks.unshift(taskFromRow(data));
+  closeFormModal(); renderTasks();
+  document.getElementById('navCountTasks').textContent = tasks.filter(t=>!t.done).length;
+  if(document.getElementById('view-deal-detail').classList.contains('active')) renderDealDetailTasks();
+  if(document.getElementById('view-contact-detail').classList.contains('active')) renderContactDetailTasks();
+  showToast('Taak toegevoegd');
 }
 async function addTask(){
   const input = document.getElementById('newTaskInput');
@@ -2199,10 +2305,22 @@ searchInput.addEventListener('input', ()=>{
   if(!q){ searchDropdown.classList.remove('show'); return; }
   const cMatches = contacts.filter(c=>c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q)).slice(0,4);
   const dMatches = deals.filter(d=>d.company.toLowerCase().includes(q)).slice(0,4);
+  const coMatches = companies.filter(c=>c.name.toLowerCase().includes(q)).slice(0,4);
+  const lMatches = leads.filter(l=>!l.converted && (l.name.toLowerCase().includes(q)||l.company.toLowerCase().includes(q))).slice(0,4);
   let html = '';
   if(cMatches.length){
     html += '<div class="sd-label">Contacten</div>' + cMatches.map(c=>
       '<div class="sd-item" onclick="searchGo(()=>openContact('+c.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div><div><div class="sd-title">'+esc(c.name)+'</div><div class="sd-sub">'+esc(c.company)+'</div></div></div>'
+    ).join('');
+  }
+  if(coMatches.length){
+    html += '<div class="sd-label">Bedrijven</div>' + coMatches.map(c=>
+      '<div class="sd-item" onclick="searchGo(()=>openFormModal(\'company\','+c.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 8h6v13h-6"/></svg></div><div><div class="sd-title">'+esc(c.name)+'</div><div class="sd-sub">'+esc(c.domain||'Bedrijf')+'</div></div></div>'
+    ).join('');
+  }
+  if(lMatches.length){
+    html += '<div class="sd-label">Leads</div>' + lMatches.map(l=>
+      '<div class="sd-item" onclick="searchGo(()=>openFormModal(\'lead\','+l.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5L3 4z"/></svg></div><div><div class="sd-title">'+esc(l.name)+'</div><div class="sd-sub">'+esc(l.company||'Lead')+'</div></div></div>'
     ).join('');
   }
   if(dMatches.length){
@@ -2210,7 +2328,7 @@ searchInput.addEventListener('input', ()=>{
       '<div class="sd-item" onclick="searchGo(()=>openDeal('+d.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="sd-title">'+esc(d.company)+'</div><div class="sd-sub">'+fmtEur(d.amount)+'</div></div></div>'
     ).join('');
   }
-  if(!cMatches.length && !dMatches.length) html = '<div class="sd-empty">Geen resultaten voor "'+esc(searchInput.value)+'"</div>';
+  if(!cMatches.length && !dMatches.length && !coMatches.length && !lMatches.length) html = '<div class="sd-empty">Geen resultaten voor "'+esc(searchInput.value)+'"</div>';
   searchDropdown.innerHTML = html;
   searchDropdown.classList.add('show');
 });
@@ -2331,12 +2449,17 @@ document.addEventListener('keydown', (e)=>{
     overlay.classList.contains('show') ? closeCmdk() : openCmdk();
     return;
   }
-  const overlay = document.getElementById('cmdkOverlay');
-  if(!overlay.classList.contains('show')) return;
-  if(e.key==='Escape'){ closeCmdk(); return; }
-  if(e.key==='ArrowDown'){ e.preventDefault(); cmdkSelected = Math.min(cmdkCurrentResults.length-1, cmdkSelected+1); cmdkHover(cmdkSelected); scrollCmdkIntoView(); }
-  if(e.key==='ArrowUp'){ e.preventDefault(); cmdkSelected = Math.max(0, cmdkSelected-1); cmdkHover(cmdkSelected); scrollCmdkIntoView(); }
-  if(e.key==='Enter'){ e.preventDefault(); execCmdkItem(cmdkSelected); }
+  if(overlay.classList.contains('show')){
+    if(e.key==='Escape'){ closeCmdk(); return; }
+    if(e.key==='ArrowDown'){ e.preventDefault(); cmdkSelected = Math.min(cmdkCurrentResults.length-1, cmdkSelected+1); cmdkHover(cmdkSelected); scrollCmdkIntoView(); }
+    if(e.key==='ArrowUp'){ e.preventDefault(); cmdkSelected = Math.max(0, cmdkSelected-1); cmdkHover(cmdkSelected); scrollCmdkIntoView(); }
+    if(e.key==='Enter'){ e.preventDefault(); execCmdkItem(cmdkSelected); }
+    return;
+  }
+  if(e.key==='Escape'){
+    const formOverlay = document.getElementById('formOverlay');
+    if(formOverlay && formOverlay.classList.contains('show')){ closeFormModal(); return; }
+  }
 });
 function scrollCmdkIntoView(){
   const el = document.querySelector('.cmdk-item[data-idx="'+cmdkSelected+'"]');
@@ -2347,7 +2470,10 @@ function scrollCmdkIntoView(){
 function closeFormModal(){ document.getElementById('formOverlay').classList.remove('show'); }
 function escAttr(s){ return (s===undefined||s===null?'':s).toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function contactOptionsHTML(selectedId){
-  return contacts.map(c=>'<option value="'+c.id+'" '+(selectedId===c.id?'selected':'')+'>'+escAttr(c.name)+' — '+escAttr(c.company)+'</option>').join('');
+  return '<option value="">— Geen contact —</option>' + contacts.map(c=>'<option value="'+c.id+'" '+(selectedId===c.id?'selected':'')+'>'+escAttr(c.name)+' — '+escAttr(c.company)+'</option>').join('');
+}
+function dealOptionsHTML(selectedId){
+  return '<option value="">— Geen deal —</option>' + deals.map(d=>'<option value="'+d.id+'" '+(selectedId===d.id?'selected':'')+'>'+escAttr(d.company)+' — '+fmtEur(d.amount)+'</option>').join('');
 }
 function clearFieldError(el){ el.closest('.field-row').classList.remove('field-error'); }
 function setFieldError(el, msg){ const row = el.closest('.field-row'); row.classList.add('field-error'); const m = row.querySelector('.field-error-msg'); if(m) m.textContent = msg; }
@@ -2359,7 +2485,7 @@ function validateField(el, msg){
 function computeInitials(name){ return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 
 function openFormModal(type, editId){
-  const builders = { contact:buildContactForm, deal:buildDealForm, invoice:buildInvoiceForm, contract:buildContractForm, company:buildCompanyForm, lead:buildLeadForm };
+  const builders = { contact:buildContactForm, deal:buildDealForm, invoice:buildInvoiceForm, contract:buildContractForm, company:buildCompanyForm, lead:buildLeadForm, task:buildTaskForm };
   const builder = builders[type];
   if(!builder) return;
   document.getElementById('formBox').innerHTML = builder(editId || null);
@@ -2374,7 +2500,7 @@ function buildContactForm(editId){
   return '<div class="modal-head"><div class="modal-title">'+(rec?'Contact bewerken':'Nieuw contact')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
   '<div class="modal-body">'+
     '<div class="field-row"><label>Naam <span class="req">*</span></label><input type="text" id="ncName" value="'+escAttr(rec?rec.name:'')+'"><div class="field-error-msg">Vul een naam in</div></div>'+
-    '<div class="field-row"><label>Bedrijf <span class="req">*</span></label><input type="text" id="ncCompany" value="'+escAttr(rec?rec.company:'')+'"><div class="field-error-msg">Vul een bedrijfsnaam in</div></div>'+
+    '<div class="field-row"><label>Bedrijf <span class="req">*</span></label><input type="text" id="ncCompany" list="companyNamesList" value="'+escAttr(rec?rec.company:'')+'"><div class="field-error-msg">Vul een bedrijfsnaam in</div></div>'+
     '<div class="field-row two-col">'+
       '<div><label>E-mail <span class="req">*</span></label><input type="email" id="ncEmail" value="'+escAttr(rec?rec.email:'')+'"><div class="field-error-msg">Vul een geldig e-mailadres in</div></div>'+
       '<div><label>Telefoon</label><input type="text" id="ncPhone" value="'+escAttr(rec&&rec.phone!=='—'?rec.phone:'')+'" placeholder="06-12345678"></div>'+
@@ -2450,12 +2576,19 @@ async function deleteContact(id){
 }
 
 /* ---- Deal ---- */
+let _dealModalPresetContactId = null;
+function openDealModalForContact(contactId){
+  _dealModalPresetContactId = contactId;
+  openFormModal('deal');
+}
 function buildDealForm(editId){
   const rec = editId ? deals.find(d=>d.id===editId) : null;
+  const presetContactId = rec ? rec.contactId : _dealModalPresetContactId;
+  _dealModalPresetContactId = null;
   return '<div class="modal-head"><div class="modal-title">'+(rec?'Deal bewerken':'Nieuwe deal')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
   '<div class="modal-body">'+
     '<div class="field-row"><label>Naam deal <span class="req">*</span></label><input type="text" id="ndName" value="'+escAttr(rec?rec.company:'')+'" placeholder="bv. Orbit Logistics — uitbreiding"><div class="field-error-msg">Vul een naam in</div></div>'+
-    '<div class="field-row"><label>Contact <span class="req">*</span></label><select id="ndContact">'+contactOptionsHTML(rec?rec.contactId:null)+'</select></div>'+
+    '<div class="field-row"><label>Contact</label><select id="ndContact">'+contactOptionsHTML(presetContactId)+'</select></div>'+
     '<div class="field-row two-col">'+
       '<div><label>Waarde (€) <span class="req">*</span></label><input type="text" id="ndAmount" value="'+(rec?rec.amount:'')+'" placeholder="bv. 8500"><div class="field-error-msg">Vul een geldig bedrag in</div></div>'+
       '<div><label>Fase</label><select id="ndStage">'+stages.map(s=>'<option value="'+s.id+'" '+(rec&&rec.stage===s.id?'selected':'')+'>'+escAttr(s.name)+'</option>').join('')+'</select></div>'+
@@ -2477,7 +2610,8 @@ async function submitDealForm(editId){
 
   const contactLocalId = parseInt(document.getElementById('ndContact').value) || null;
   const closeDateRaw = document.getElementById('ndClose').value || null;
-  const prob = parseInt(document.getElementById('ndProb').value) || 20;
+  const probRaw = parseInt(document.getElementById('ndProb').value);
+  const prob = Math.max(0, Math.min(100, isNaN(probRaw) ? 20 : probRaw));
   const stageKey = document.getElementById('ndStage').value;
   const stageObj = stages.find(s=>s.id===stageKey);
   const payload = {
@@ -3104,7 +3238,10 @@ function dealFromRow(row){
 function taskFromRow(row){
   return {
     id: localIdFor('tasks', row.id), title: row.title, due: row.due_date ? fmtDateNL(row.due_date) : '—',
-    prio: row.priority, done: row.done, tag: row.tag||''
+    prio: row.priority, done: row.done, tag: row.tag||'',
+    contactId: row.contact_id ? localIdFor('contacts', row.contact_id) : null,
+    dealId: row.deal_id ? localIdFor('deals', row.deal_id) : null,
+    _dueRaw: row.due_date
   };
 }
 function companyFromRow(row){
@@ -3129,6 +3266,10 @@ function friendlyDbError(err){
   if(!err) return 'Er ging iets mis. Probeer het opnieuw.';
   if(err.code === '23505') return 'Dit bestaat al.';
   if(err.code === '23514' || err.code === '23502') return 'Vul alle verplichte velden correct in.';
+  if(err.code === '42501') return 'Je hebt geen rechten om deze actie uit te voeren.';
+  if(/last owner/i.test(err.message||'')) return 'Dit kan niet: de organisatie moet minimaal één eigenaar hebben.';
+  if(err.code === 'PGRST116') return 'Niet gevonden, of je hebt hier geen rechten toe.';
+  if(/failed to fetch|networkerror|load failed/i.test(err.message||'')) return 'Geen verbinding met de server. Controleer je internetverbinding.';
   return err.message || 'Er ging iets mis. Probeer het opnieuw.';
 }
 
@@ -3275,6 +3416,15 @@ function updateProfileChrome(){
   document.getElementById('profileAvatar').textContent = computeInitials(currentOrg ? currentOrg.name : 'NC');
   const orgNameInput = document.getElementById('orgNameInput');
   if(orgNameInput) orgNameInput.value = currentOrg ? currentOrg.name : '';
+
+  const isAdmin = currentMembership && (currentMembership.role==='owner' || currentMembership.role==='admin');
+  const inviteBtn = document.getElementById('teamInviteBtn');
+  if(inviteBtn){ inviteBtn.style.display = isAdmin ? '' : 'none'; }
+  const orgSaveBtn = document.getElementById('orgSaveBtn');
+  const memberNote = document.getElementById('orgProfileMemberNote');
+  if(orgSaveBtn){ orgSaveBtn.style.display = isAdmin ? '' : 'none'; }
+  if(orgNameInput){ orgNameInput.disabled = !isAdmin; }
+  if(memberNote){ memberNote.style.display = isAdmin ? 'none' : 'block'; }
 }
 async function saveOrgProfile(){
   const name = document.getElementById('orgNameInput').value.trim();
@@ -3305,17 +3455,46 @@ async function markAllNotificationsRead(){
 }
 
 /* ================= TEAM (real memberships) ================= */
+let _teamRowsCache = [];
 async function fetchAndRenderTeam(){
-  const { data } = await sb.from('memberships').select('id, role, profiles(id, full_name, avatar_color)').order('created_at');
+  const { data } = await sb.from('memberships').select('id, user_id, role, profiles(id, full_name, avatar_color)').order('created_at');
   const el = document.getElementById('teamGrid');
   if(!el) return;
   const rows = data || [];
+  _teamRowsCache = rows;
   document.querySelector('#view-team .page-sub').textContent = rows.length + ' teamleden';
   const roleLabel = {owner:'Eigenaar', admin:'Beheerder', member:'Lid'};
-  el.innerHTML = rows.map(m=>{
+  const isAdmin = currentMembership && (currentMembership.role==='owner' || currentMembership.role==='admin');
+  el.innerHTML = rows.map((m,i)=>{
     const p = m.profiles || {full_name:'—', avatar_color:'#1F4D3A'};
-    return '<div class="team-card"><div class="team-top"><div class="team-avatar" style="background:'+esc(p.avatar_color)+';">'+esc(computeInitials(p.full_name||'?'))+'</div><div><div class="team-name">'+esc(p.full_name||'—')+'</div><div class="team-role">'+esc(roleLabel[m.role]||m.role)+'</div></div></div></div>';
+    const isSelf = m.user_id === currentUser.id;
+    const actions = (isAdmin && !isSelf) ?
+      '<div style="margin-top:12px; display:flex; gap:6px; align-items:center;">'+
+        '<select onchange="changeMemberRole('+i+', this.value)" style="flex:1; font-size:11px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--panel-2); color:var(--white); font-family:\'Inter\',sans-serif;">'+
+          Object.keys(roleLabel).map(r=>'<option value="'+r+'" '+(m.role===r?'selected':'')+'>'+roleLabel[r]+'</option>').join('')+
+        '</select>'+
+        '<button class="modal-close" style="width:26px; height:26px; flex-shrink:0;" title="Verwijderen uit organisatie" onclick="removeMember('+i+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'+
+      '</div>' : '';
+    return '<div class="team-card"><div class="team-top"><div class="team-avatar" style="background:'+esc(p.avatar_color)+';">'+esc(computeInitials(p.full_name||'?'))+'</div><div><div class="team-name">'+esc(p.full_name||'—')+(isSelf?' (jij)':'')+'</div><div class="team-role">'+esc(roleLabel[m.role]||m.role)+'</div></div></div>'+actions+'</div>';
   }).join('') || '<div class="sd-empty">Nog geen teamleden.</div>';
+}
+async function changeMemberRole(rowIndex, newRole){
+  const m = _teamRowsCache[rowIndex];
+  if(!m) return;
+  const { error } = await sb.from('memberships').update({role:newRole}).eq('id', m.id);
+  if(error){ showToast('Wijzigen mislukt: '+friendlyDbError(error)); }
+  else { showToast('Rol bijgewerkt'); }
+  fetchAndRenderTeam();
+}
+async function removeMember(rowIndex){
+  const m = _teamRowsCache[rowIndex];
+  if(!m) return;
+  const name = (m.profiles && m.profiles.full_name) || 'dit teamlid';
+  if(!confirm(name+' verwijderen uit de organisatie?')) return;
+  const { error } = await sb.from('memberships').delete().eq('id', m.id);
+  if(error){ showToast('Verwijderen mislukt: '+friendlyDbError(error)); return; }
+  showToast(name+' verwijderd uit de organisatie');
+  fetchAndRenderTeam();
 }
 async function inviteTeammate(){
   if(!currentMembership || (currentMembership.role !== 'owner' && currentMembership.role !== 'admin')){
