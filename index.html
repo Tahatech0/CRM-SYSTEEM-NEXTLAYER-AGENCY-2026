@@ -1,0 +1,2695 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>NextCRM — Nextlayer</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231F4D3A'/%3E%3Crect x='7' y='10' width='18' height='3.5' rx='1.75' fill='%238FE3B3'/%3E%3Crect x='7' y='16' width='13' height='3.5' rx='1.75' fill='%238FE3B3' opacity='.75'/%3E%3Crect x='7' y='22' width='8' height='3.5' rx='1.75' fill='%238FE3B3' opacity='.55'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFBF8;
+    --panel:#FFFFFF;
+    --panel-2:#F1F4F0;
+    --panel-hover:#E9EFE9;
+    --border:#E3E8E1;
+    --border-soft:#ECF0E9;
+    --accent:#1F4D3A;
+    --accent-bright:#2C6B4E;
+    --accent-dim:#153A2A;
+    --accent-tint:rgba(31,77,58,.09);
+    --white:#16211B;
+    --muted:#5C6960;
+    --muted-2:#8B9690;
+    --coral:#B85C42;
+    --amber:#A8792E;
+    --blue:#3D5A8C;
+    --on-accent:#FAFBF8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    background-image:
+      radial-gradient(ellipse 900px 500px at 85% -10%, rgba(31,77,58,0.05), transparent),
+      radial-gradient(ellipse 700px 500px at -10% 90%, rgba(31,77,58,0.035), transparent);
+  }
+  ::selection{ background:var(--accent); color:var(--on-accent); }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:'Inter',sans-serif; }
+
+  .app{ display:flex; min-height:100vh; }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:236px; flex-shrink:0;
+    border-right:1px solid var(--border-soft);
+    padding:26px 18px;
+    display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    transition:transform .22s ease;
+    z-index:120; background:var(--bg);
+  }
+  .hamburger-btn{ display:none; }
+  .sidebar-backdrop{ display:none; }
+  @media (max-width: 900px){
+    .hamburger-btn{ display:flex; }
+    .sidebar{ position:fixed; left:0; top:0; transform:translateX(-100%); box-shadow:0 0 40px rgba(15,25,20,.18); }
+    .sidebar.mobile-open{ transform:translateX(0); }
+    .sidebar-backdrop{ display:none; position:fixed; inset:0; background:rgba(15,25,20,.35); z-index:110; }
+    .sidebar-backdrop.show{ display:block; }
+    .main{ padding-left:20px; padding-right:20px; }
+  }
+  .brand{ display:flex; align-items:center; gap:11px; padding:4px 8px 26px 8px; }
+  .brand-mark{ width:30px; height:26px; display:flex; flex-direction:column; gap:3px; justify-content:center; }
+  .brand-mark span{ display:block; height:4px; border-radius:2px; background:linear-gradient(90deg,var(--accent-bright),var(--accent)); }
+  .brand-mark span:nth-child(1){ width:100%; }
+  .brand-mark span:nth-child(2){ width:72%; opacity:.85; }
+  .brand-mark span:nth-child(3){ width:44%; opacity:.65; }
+  .brand-name{ font-family:'Inter',sans-serif; font-weight:700; font-size:19px; letter-spacing:-0.01em; }
+  .brand-name em{ font-style:normal; color:var(--white); }
+
+  .nav-label{ font-size:10.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--white); padding:16px 12px 8px; font-weight:600; opacity:.55; }
+  .nav{ display:flex; flex-direction:column; gap:2px; }
+  .nav-item{
+    display:flex; align-items:center; gap:11px;
+    padding:9px 12px; border-radius:8px;
+    color:var(--white); font-size:14px; font-weight:500;
+    cursor:pointer; transition:background .15s, color .15s;
+    position:relative; opacity:.68;
+    background:none; border:none; width:100%; text-align:left;
+  }
+  .nav-item svg{ width:17px; height:17px; flex-shrink:0; opacity:.85; }
+  .nav-item:hover{ background:var(--panel-2); opacity:1; }
+  .nav-item.active{ background:var(--accent-tint); opacity:1; color:var(--accent); font-weight:600; }
+  .nav-item.active svg{ color:var(--accent); }
+  .nav-item.active::before{
+    content:''; position:absolute; left:-18px; top:50%; transform:translateY(-50%);
+    width:3px; height:16px; border-radius:0 3px 3px 0; background:var(--accent);
+  }
+  .nav-count{ margin-left:auto; font-size:11px; font-family:'JetBrains Mono',monospace; opacity:.7; }
+
+  .sidebar-foot{ margin-top:auto; }
+  .upgrade-card{
+    background:var(--panel-2); border:1px solid var(--border);
+    border-radius:14px; padding:16px; margin-top:10px;
+    position:relative; overflow:hidden;
+  }
+  .upgrade-card::after{
+    content:''; position:absolute; right:-30px; top:-30px; width:100px; height:100px;
+    background:radial-gradient(circle, rgba(31,77,58,.14), transparent 70%);
+  }
+  .upgrade-card .lbl{ font-size:12.5px; font-weight:700; color:var(--white); margin-bottom:4px; }
+  .upgrade-card .sub{ font-size:11.5px; color:var(--white); opacity:.65; line-height:1.5; margin-bottom:12px; }
+  .btn-mini{
+    width:100%; padding:8px; border-radius:8px; border:none;
+    background:var(--accent); color:var(--on-accent); font-weight:600; font-size:12.5px;
+    cursor:pointer;
+  }
+
+  .user-row{ display:flex; align-items:center; gap:10px; padding:14px 8px 4px; border-top:1px solid var(--border-soft); margin-top:14px; }
+  .avatar{ width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent-dim)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--on-accent); flex-shrink:0; }
+  .user-row .who{ font-size:13px; font-weight:600; }
+  .user-row .role{ font-size:11px; color:var(--white); opacity:.6; }
+
+  /* ---------- MAIN ---------- */
+  .main{ flex:1; padding:28px 36px 60px; max-width:1280px; }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; gap:20px; }
+  .search-wrap{ display:flex; align-items:center; gap:9px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:9px 14px; width:360px; position:relative; }
+  .search-wrap svg{ width:15px; height:15px; color:var(--muted-2); flex-shrink:0; }
+  .search-wrap input{ background:none; border:none; outline:none; color:var(--white); font-size:13.5px; font-family:'Inter',sans-serif; width:100%; flex:1; min-width:0; }
+  .search-wrap input::placeholder{ color:var(--muted-2); }
+  .cmdk-hint{ flex-shrink:0; font-size:10.5px; font-family:'JetBrains Mono',monospace; color:var(--muted-2); background:var(--panel-2); border:1px solid var(--border); border-radius:5px; padding:2px 6px; cursor:pointer; }
+  .cmdk-hint:hover{ color:var(--accent); border-color:var(--accent); }
+
+  /* ---------- COMMAND PALETTE ---------- */
+  .cmdk-overlay{
+    position:fixed; inset:0; background:rgba(15,25,20,.38); backdrop-filter:blur(2px);
+    display:none; align-items:flex-start; justify-content:center; padding-top:12vh; z-index:300;
+    animation:cmdkBackdropIn .15s ease;
+  }
+  .cmdk-overlay.show{ display:flex; }
+  @keyframes cmdkBackdropIn{ from{opacity:0;} to{opacity:1;} }
+  .cmdk-modal{
+    width:560px; max-width:90vw; max-height:60vh; background:var(--panel); border:1px solid var(--border);
+    border-radius:16px; box-shadow:0 24px 60px rgba(15,25,20,.28); overflow:hidden; display:flex; flex-direction:column;
+    animation:cmdkModalIn .18s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes cmdkModalIn{ from{opacity:0; transform:translateY(-8px) scale(.98);} to{opacity:1; transform:translateY(0) scale(1);} }
+  .cmdk-input-row{ display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid var(--border-soft); flex-shrink:0; }
+  .cmdk-input-row svg{ width:17px; height:17px; color:var(--muted-2); flex-shrink:0; }
+  .cmdk-input-row input{ flex:1; min-width:0; border:none; outline:none; background:none; font-size:15px; color:var(--white); font-family:'Inter',sans-serif; }
+  .cmdk-input-row input::placeholder{ color:var(--muted-2); }
+  .cmdk-esc{ flex-shrink:0; font-size:10.5px; font-family:'JetBrains Mono',monospace; color:var(--muted-2); background:var(--panel-2); border:1px solid var(--border); border-radius:5px; padding:2px 6px; }
+  .cmdk-results{ overflow-y:auto; padding:8px; }
+  .cmdk-group-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted-2); font-weight:700; padding:10px 10px 4px; }
+  .cmdk-item{ display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:9px; cursor:pointer; }
+  .cmdk-item.selected, .cmdk-item:hover{ background:var(--accent-tint); }
+  .cmdk-item .ci-icon{ width:30px; height:30px; border-radius:8px; background:var(--panel-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .cmdk-item.selected .ci-icon, .cmdk-item:hover .ci-icon{ background:var(--panel); }
+  .cmdk-item .ci-icon svg{ width:14px; height:14px; color:var(--accent); }
+  .ci-title{ font-size:13.5px; font-weight:600; }
+  .ci-sub{ font-size:11.5px; color:var(--muted); }
+  .cmdk-item .ci-enter{ margin-left:auto; font-size:10px; color:var(--muted-2); font-family:'JetBrains Mono',monospace; opacity:0; flex-shrink:0; }
+  .cmdk-item.selected .ci-enter{ opacity:1; }
+  .cmdk-empty{ padding:26px; text-align:center; color:var(--muted-2); font-size:13px; }
+
+  /* ---------- FORM MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(15,25,20,.38); backdrop-filter:blur(2px);
+    display:none; align-items:center; justify-content:center; padding:24px; z-index:250;
+  }
+  .modal-overlay.show{ display:flex; animation:cmdkBackdropIn .15s ease; }
+  .modal-box{
+    width:460px; max-width:100%; max-height:86vh; overflow-y:auto; background:var(--panel); border:1px solid var(--border);
+    border-radius:16px; box-shadow:0 24px 60px rgba(15,25,20,.28);
+    animation:cmdkModalIn .18s cubic-bezier(.16,1,.3,1);
+  }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border-soft); position:sticky; top:0; background:var(--panel); }
+  .modal-title{ font-size:16px; font-weight:700; }
+  .modal-close{ width:28px; height:28px; border-radius:8px; border:none; background:var(--panel-2); color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .modal-close svg{ width:14px; height:14px; }
+  .modal-body{ padding:20px 22px; }
+  .modal-foot{ display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid var(--border-soft); }
+  .field-row{ margin-bottom:15px; }
+  .field-row label{ display:block; font-size:12.5px; font-weight:700; margin-bottom:6px; color:var(--white); }
+  .field-row .req{ color:var(--coral); }
+  .field-row input[type=text], .field-row input[type=email], .field-row input[type=date], .field-row select, .field-row textarea{
+    width:100%; border:1px solid var(--border); background:var(--panel-2); border-radius:9px; padding:10px 12px; font-size:13.5px; outline:none; color:var(--white); font-family:'Inter',sans-serif;
+  }
+  .field-row.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .field-error input, .field-error select{ border-color:var(--coral) !important; }
+  .field-error-msg{ font-size:11.5px; color:var(--coral); margin-top:4px; display:none; }
+  .field-error .field-error-msg{ display:block; }
+  .field-row input:focus, .field-row select:focus, .field-row textarea:focus{ border-color:var(--accent); }
+
+  a:focus-visible, button:focus-visible, .nav-item:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px; border-radius:6px;
+  }
+
+  /* ---------- AI DEAL SUMMARY ---------- */
+  .ai-summary{ margin:16px 20px 4px; padding:13px 15px; background:var(--accent-tint); border:1px solid rgba(31,77,58,.18); border-radius:12px; display:flex; gap:10px; align-items:flex-start; }
+  .ai-summary .ai-badge{ flex-shrink:0; width:22px; height:22px; border-radius:7px; background:var(--accent); display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .ai-summary .ai-badge svg{ width:12px; height:12px; color:var(--on-accent); }
+  .ai-summary p{ font-size:12.5px; line-height:1.55; color:var(--white); }
+  .ai-summary .ai-label{ font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); margin-bottom:3px; }
+
+  .search-dropdown{
+    position:absolute; top:calc(100% + 8px); left:0; width:100%; background:var(--panel);
+    border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 28px rgba(20,40,30,.1);
+    padding:8px; display:none; z-index:50; max-height:320px; overflow-y:auto;
+  }
+  .search-dropdown.show{ display:block; }
+  .sd-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted-2); font-weight:700; padding:8px 10px 4px; }
+  .sd-item{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; cursor:pointer; }
+  .sd-item:hover{ background:var(--panel-2); }
+  .sd-item .sd-icon{ width:28px; height:28px; border-radius:7px; background:var(--panel-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .sd-item .sd-icon svg{ width:13px; height:13px; color:var(--accent); }
+  .sd-title{ font-size:13px; font-weight:600; }
+  .sd-sub{ font-size:11px; color:var(--muted-2); }
+  .sd-empty{ padding:14px 10px; font-size:12.5px; color:var(--muted-2); text-align:center; }
+
+  .top-actions{ display:flex; align-items:center; gap:14px; flex-shrink:0; }
+  .icon-btn{ width:36px; height:36px; border-radius:9px; background:var(--panel); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+  .icon-btn svg{ width:16px; height:16px; color:var(--muted); }
+  .icon-btn .dot{ position:absolute; top:8px; right:8px; width:6px; height:6px; border-radius:50%; background:var(--coral); border:1.5px solid var(--panel); animation:dotPulse 2.2s infinite; }
+  @keyframes dotPulse{
+    0%{ box-shadow:0 0 0 0 rgba(184,92,66,.45); }
+    70%{ box-shadow:0 0 0 6px rgba(184,92,66,0); }
+    100%{ box-shadow:0 0 0 0 rgba(184,92,66,0); }
+  }
+  .btn-primary{ background:var(--accent); color:var(--on-accent); border:none; padding:10px 16px; border-radius:9px; font-weight:600; font-size:13.5px; cursor:pointer; white-space:nowrap; }
+  .btn-secondary{ background:var(--panel); border:1px solid var(--border); color:var(--white); padding:10px 16px; border-radius:9px; font-weight:600; font-size:13.5px; cursor:pointer; }
+  .btn-ghost{ background:none; border:none; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; padding:6px 4px; }
+
+  .notif-dropdown{
+    position:absolute; top:calc(100% + 10px); right:0; width:320px; background:var(--panel);
+    border:1px solid var(--border); border-radius:14px; box-shadow:0 14px 32px rgba(20,40,30,.12);
+    padding:6px; display:none; z-index:50;
+  }
+  .notif-dropdown.show{ display:block; }
+  .notif-head{ display:flex; align-items:center; justify-content:space-between; padding:10px 10px 6px; }
+  .notif-head b{ font-size:13.5px; }
+
+  /* ---------- VIEW SWITCHING ---------- */
+  .view{ display:none; }
+  .view.active{ display:block; }
+  .view.anim-deep{ animation:viewDeepIn .32s cubic-bezier(.16,1,.3,1); }
+  .view.anim-back{ animation:viewBackIn .26s cubic-bezier(.16,1,.3,1); }
+  .view.anim-wide{ animation:viewWideIn .22s ease; }
+  @keyframes viewDeepIn{ from{ opacity:0; transform:translateY(14px) scale(.985); } to{ opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes viewBackIn{ from{ opacity:0; transform:translateY(-8px) scale(1.008); } to{ opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes viewWideIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+
+  .page-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:14px; }
+  .page-title{ font-family:'Inter',sans-serif; font-size:26px; font-weight:700; letter-spacing:-0.01em; margin-bottom:6px; }
+  .page-sub{ color:var(--muted); font-size:13.5px; }
+  .back-link{ display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; margin-bottom:14px; }
+  .back-link svg{ width:14px; height:14px; }
+  .back-link:hover{ color:var(--accent); }
+
+  .header-block{ margin-bottom:26px; }
+  .eyebrow{ font-size:12px; color:var(--accent); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px; }
+  .welcome{ font-family:'Inter',sans-serif; font-size:28px; font-weight:700; letter-spacing:-0.01em; margin-bottom:9px; }
+  .welcome .accentword{ color:var(--accent); }
+  .subline{ color:var(--white); opacity:.7; font-size:14px; }
+  .subline b{ color:var(--white); opacity:1; font-weight:700; }
+  .subline .sep{ opacity:.5; margin:0 8px; }
+
+  /* ---------- STAT CARDS ---------- */
+  .stats-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px; }
+  .stat-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px 18px 16px; position:relative; overflow:hidden; transition:transform .18s ease, box-shadow .18s ease; }
+  .stat-card:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(20,40,30,.09); }
+  .stat-card .layerbar{ position:absolute; left:0; top:0; bottom:0; width:3px; }
+  .stat-card .layerbar span{ display:block; position:absolute; left:0; width:100%; border-radius:0 3px 3px 0; bottom:0; }
+  .stat-top{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+  .stat-name{ font-size:12.5px; color:var(--muted); font-weight:600; }
+  .stat-value{ font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em; margin-bottom:6px; }
+  .stat-delta{ font-size:12px; color:var(--muted); }
+  .stat-delta b{ color:var(--accent); font-weight:700; }
+  .stat-icon{ width:34px; height:34px; border-radius:9px; background:var(--panel-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+  .stat-icon svg{ width:16px; height:16px; color:var(--accent); }
+
+  /* ---------- PANELS ---------- */
+  .content-grid{ display:grid; grid-template-columns:1.65fr 1fr; gap:16px; margin-bottom:16px; align-items:start; }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:14px; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border-soft); gap:10px; flex-wrap:wrap; }
+  .panel-title{ font-family:'Inter',sans-serif; font-size:16px; font-weight:700; }
+  .panel-actions{ display:flex; align-items:center; gap:8px; }
+  .chip-select{ background:var(--panel-2); border:1px solid var(--border); border-radius:7px; padding:6px 10px; font-size:12px; color:var(--white); cursor:pointer; }
+  .chip-toggle{ display:flex; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; }
+  .chip-toggle button{ border:none; background:none; padding:6px 12px; border-radius:6px; font-size:12.5px; font-weight:600; color:var(--muted); cursor:pointer; }
+  .chip-toggle button.active{ background:var(--panel); color:var(--accent); box-shadow:0 1px 2px rgba(20,40,30,.08); }
+
+  /* tables */
+  .deal-table{ width:100%; border-collapse:collapse; }
+  .deal-table th{ text-align:left; font-size:11px; color:var(--white); opacity:.55; text-transform:uppercase; letter-spacing:.06em; font-weight:700; padding:12px 20px; }
+  .deal-table td{ padding:13px 20px; font-size:13.5px; border-top:1px solid var(--border-soft); }
+  .deal-table tbody tr{ cursor:pointer; transition:background .12s; }
+  .deal-table tbody tr:hover{ background:var(--panel-2); }
+  .deal-name{ display:flex; align-items:center; gap:10px; }
+  .deal-logo{ width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex-shrink:0; }
+  .deal-co{ font-weight:700; }
+  .deal-contact{ font-size:11.5px; color:var(--muted); }
+  .stage-pill{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:700; white-space:nowrap; }
+  .stage-pill .d{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .amount{ font-family:'JetBrains Mono',monospace; font-weight:700; }
+  .prob{ color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:12.5px; }
+
+  /* activity feed */
+  .activity-list{ padding:8px 8px 14px; }
+  .activity-item{ display:flex; gap:12px; padding:12px 12px; border-radius:10px; }
+  .activity-item:hover{ background:var(--panel-2); }
+  .act-icon{ width:30px; height:30px; border-radius:8px; background:var(--panel-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .act-icon svg{ width:14px; height:14px; color:var(--accent); }
+  .act-text{ font-size:13px; line-height:1.45; }
+  .act-text b{ font-weight:700; }
+  .act-time{ font-size:11px; color:var(--muted-2); margin-top:3px; font-family:'JetBrains Mono',monospace; }
+
+  /* chart bars */
+  .chart-wrap{ padding:20px; }
+  .chart-bars{ display:flex; align-items:flex-end; gap:14px; height:150px; margin-top:6px; }
+  .bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end; }
+  .bar-track{ width:100%; max-width:34px; background:var(--panel-2); border-radius:6px; display:flex; align-items:flex-end; flex:1; overflow:hidden; }
+  .bar-fill{ width:100%; border-radius:6px; background:linear-gradient(180deg,var(--accent-bright),var(--accent-dim)); position:relative; }
+  .bar-fill.dim{ background:linear-gradient(180deg, #DDE4DA, #C9D2C6); }
+  .bar-label{ font-size:11px; color:var(--muted); }
+  .bar-pct{ font-size:10.5px; font-family:'JetBrains Mono',monospace; color:var(--muted); }
+
+  /* pipeline strip on dashboard */
+  .pipeline-cols{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding:18px 20px 20px; }
+  .pcol-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .pcol-name{ font-size:12px; font-weight:700; color:var(--muted); }
+  .pcol-count{ font-size:11px; font-family:'JetBrains Mono',monospace; background:var(--panel-2); border:1px solid var(--border); padding:1px 7px; border-radius:20px; color:var(--white); }
+  .pcard{ background:var(--panel-2); border:1px solid var(--border-soft); border-radius:10px; padding:10px; margin-bottom:8px; transition:transform .16s ease, box-shadow .16s ease; }
+  .pcard:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(20,40,30,.08); }
+  .pcard .pname{ font-size:12.5px; font-weight:700; margin-bottom:6px; }
+  .pcard .pamt{ font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--accent); }
+  .pcol-bar{ height:3px; border-radius:2px; margin-bottom:12px; }
+  .bottom-grid{ display:grid; grid-template-columns:1fr 1.4fr; gap:16px; }
+
+  footer.credit{ text-align:center; color:var(--white); opacity:.4; font-size:11.5px; margin-top:30px; }
+
+  /* ---------- FILTER BAR (contacts / deals / tasks) ---------- */
+  .filter-bar{ display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .filter-bar .search-wrap{ width:280px; }
+  .filter-chip{ background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:12.5px; color:var(--white); cursor:pointer; display:flex; align-items:center; gap:6px; }
+  .filter-chip.active{ background:var(--accent-tint); border-color:var(--accent); color:var(--accent); font-weight:700; }
+
+  /* ---------- CONTACT / DEAL DETAIL ---------- */
+  .detail-head{ display:flex; align-items:center; gap:16px; margin-bottom:22px; flex-wrap:wrap; }
+  .detail-avatar{ width:58px; height:58px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; color:var(--on-accent); background:linear-gradient(135deg,var(--accent),var(--accent-dim)); flex-shrink:0; }
+  .detail-name{ font-size:22px; font-weight:700; letter-spacing:-0.01em; }
+  .detail-meta{ font-size:13px; color:var(--muted); margin-top:3px; }
+  .detail-actions{ margin-left:auto; display:flex; gap:10px; }
+  .detail-grid{ display:grid; grid-template-columns:1.6fr 1fr; gap:16px; align-items:start; }
+  .info-list{ padding:16px 20px; display:flex; flex-direction:column; gap:14px; }
+  .info-row{ display:flex; justify-content:space-between; font-size:13px; }
+  .info-row .k{ color:var(--muted); }
+  .info-row .v{ font-weight:600; }
+  .note-input-row{ display:flex; gap:8px; padding:14px 20px; border-top:1px solid var(--border-soft); }
+  .note-input-row input{ flex:1; border:1px solid var(--border); background:var(--panel-2); border-radius:9px; padding:9px 12px; font-size:13px; outline:none; color:var(--white); font-family:'Inter',sans-serif; }
+  .tag{ display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; background:var(--accent-tint); color:var(--accent); }
+
+  .tabs{ display:flex; gap:4px; border-bottom:1px solid var(--border-soft); margin-bottom:0; padding:0 20px; }
+  .tab{ padding:12px 6px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .tab.active{ color:var(--accent); border-color:var(--accent); }
+
+  /* ---------- KANBAN ---------- */
+  .kanban{ display:grid; grid-template-columns:repeat(5,1fr); gap:14px; align-items:start; }
+  .kcol{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px; min-height:120px; transition:background .12s; }
+  .kcol.dragover{ background:var(--accent-tint); border-color:var(--accent); }
+  .kcol-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding:2px 4px; }
+  .kcol-name{ font-size:12.5px; font-weight:700; }
+  .kcol-total{ font-size:10.5px; color:var(--muted); font-family:'JetBrains Mono',monospace; padding:0 4px 8px; }
+  .kcard{ background:var(--panel-2); border:1px solid var(--border-soft); border-radius:10px; padding:11px; margin-bottom:9px; cursor:grab; transition:transform .16s ease, box-shadow .16s ease, opacity .16s ease; }
+  .kcard:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(20,40,30,.08); }
+  .kcard.dragging{ transform:rotate(2deg) scale(1.03); opacity:.85; box-shadow:0 14px 28px rgba(20,40,30,.16); cursor:grabbing; }
+  @keyframes kcardLand{ 0%{ transform:scale(.94); } 55%{ transform:scale(1.035); } 100%{ transform:scale(1); } }
+  .kcard.landed{ animation:kcardLand .32s ease; }
+  .kcard .kname{ font-size:12.5px; font-weight:700; margin-bottom:6px; }
+  .kcard .kamt{ font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--accent); font-weight:700; margin-bottom:8px; }
+  .kcard-foot{ display:flex; align-items:center; justify-content:space-between; }
+  .kcard-avatar{ width:20px; height:20px; border-radius:6px; background:var(--accent-dim); color:var(--on-accent); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .kcard-date{ font-size:10px; color:var(--muted-2); font-family:'JetBrains Mono',monospace; }
+
+  /* ---------- TASKS ---------- */
+  .task-add{ display:flex; gap:8px; padding:16px 20px; border-bottom:1px solid var(--border-soft); flex-wrap:wrap; }
+  .task-add input[type=text]{ flex:1; min-width:180px; border:1px solid var(--border); background:var(--panel-2); border-radius:9px; padding:9px 12px; font-size:13px; outline:none; color:var(--white); font-family:'Inter',sans-serif; }
+  .task-add select{ border:1px solid var(--border); background:var(--panel-2); border-radius:9px; padding:9px 10px; font-size:12.5px; color:var(--white); font-family:'Inter',sans-serif; }
+  .task-list{ padding:6px 8px 16px; }
+  .task-item{ display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:10px; }
+  .task-item:hover{ background:var(--panel-2); }
+  .task-check{ width:19px; height:19px; border-radius:6px; border:1.6px solid var(--border); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .16s ease, border-color .16s ease, transform .1s ease; }
+  .task-check:active{ transform:scale(.88); }
+  .task-check.done{ background:var(--accent); border-color:var(--accent); }
+  .task-check svg{ width:11px; height:11px; color:var(--on-accent); opacity:0; transform:scale(.4); transition:opacity .18s ease, transform .22s cubic-bezier(.34,1.56,.64,1); }
+  .task-check.done svg{ opacity:1; transform:scale(1); }
+  .task-title{ font-size:13.5px; font-weight:600; flex:1; }
+  .task-item.done .task-title{ text-decoration:line-through; opacity:.45; }
+  .task-tag{ font-size:11px; color:var(--muted); background:var(--panel-2); border:1px solid var(--border); padding:3px 9px; border-radius:20px; }
+  .task-due{ font-size:11.5px; color:var(--muted-2); font-family:'JetBrains Mono',monospace; width:70px; text-align:right; }
+  .prio-dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+  /* ---------- CALENDAR ---------- */
+  .cal-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border-soft); }
+  .cal-nav{ display:flex; align-items:center; gap:10px; }
+  .cal-nav button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--border); background:var(--panel); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .cal-nav button svg{ width:14px; height:14px; }
+  .cal-month{ font-size:15px; font-weight:700; min-width:150px; text-align:center; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); }
+  .cal-dow{ text-align:center; font-size:10.5px; font-weight:700; color:var(--muted-2); text-transform:uppercase; padding:10px 0; border-bottom:1px solid var(--border-soft); }
+  .cal-cell{ min-height:88px; border-right:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft); padding:7px; }
+  .cal-cell:nth-child(7n){ border-right:none; }
+  .cal-daynum{ font-size:12px; font-weight:600; color:var(--muted); margin-bottom:5px; }
+  .cal-cell.today .cal-daynum{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:6px; background:var(--accent); color:var(--on-accent); }
+  .cal-cell.othermonth{ opacity:.35; }
+  .cal-evt{ font-size:10px; padding:2px 6px; border-radius:5px; background:var(--accent-tint); color:var(--accent); font-weight:600; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cal-evt.amber{ background:rgba(168,121,46,.13); color:var(--amber); }
+  .cal-evt.coral{ background:rgba(184,92,66,.13); color:var(--coral); }
+
+  /* ---------- REPORTS ---------- */
+  .report-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .donut-wrap{ display:flex; align-items:center; gap:22px; padding:22px 20px; }
+  .donut{ width:130px; height:130px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; position:relative; }
+  .donut::before{ content:''; position:absolute; inset:16px; background:var(--panel); border-radius:50%; }
+  .donut-label{ position:relative; z-index:1; text-align:center; }
+  .donut-label .n{ font-size:22px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+  .donut-label .l{ font-size:10.5px; color:var(--muted); }
+  .legend{ display:flex; flex-direction:column; gap:10px; }
+  .legend-item{ display:flex; align-items:center; gap:9px; font-size:12.5px; }
+  .legend-dot{ width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+  .rep-table td, .rep-table th{ padding:11px 20px; }
+  .mini-bar{ width:70px; height:5px; border-radius:3px; background:var(--panel-2); overflow:hidden; display:inline-block; vertical-align:middle; margin-left:8px; }
+  .mini-bar span{ display:block; height:100%; background:var(--accent); border-radius:3px; }
+
+  /* ---------- TEAM ---------- */
+  .team-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .team-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px; transition:transform .18s ease, box-shadow .18s ease; }
+  .team-card:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(20,40,30,.09); }
+  .team-top{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .team-avatar{ width:42px; height:42px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; color:var(--on-accent); flex-shrink:0; }
+  .team-name{ font-size:14.5px; font-weight:700; }
+  .team-role{ font-size:11.5px; color:var(--muted); }
+  .team-stats{ display:flex; justify-content:space-between; margin-bottom:12px; }
+  .team-stat .n{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:16px; }
+  .team-stat .l{ font-size:10.5px; color:var(--muted-2); }
+  .team-target{ font-size:11px; color:var(--muted); margin-bottom:5px; display:flex; justify-content:space-between; }
+  .team-bar{ height:5px; border-radius:3px; background:var(--panel-2); overflow:hidden; }
+  .team-bar span{ display:block; height:100%; background:var(--accent); border-radius:3px; }
+
+  /* ---------- SETTINGS ---------- */
+  .settings-layout{ display:grid; grid-template-columns:200px 1fr; gap:20px; align-items:start; }
+  .settings-nav{ display:flex; flex-direction:column; gap:2px; }
+  .settings-nav button{ text-align:left; background:none; border:none; padding:10px 12px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer; }
+  .settings-nav button.active{ background:var(--accent-tint); color:var(--accent); }
+  .settings-panel{ padding:22px; }
+  .form-row{ margin-bottom:16px; max-width:420px; }
+  .form-row label{ display:block; font-size:12.5px; font-weight:700; margin-bottom:6px; color:var(--white); }
+  .form-row input[type=text], .form-row input[type=email], .form-row select, .form-row textarea{
+    width:100%; border:1px solid var(--border); background:var(--panel-2); border-radius:9px; padding:10px 12px; font-size:13.5px; outline:none; color:var(--white); font-family:'Inter',sans-serif;
+  }
+  .form-row textarea{ min-height:90px; resize:vertical; }
+  .stage-edit-row{ display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--panel-2); border:1px solid var(--border-soft); border-radius:9px; margin-bottom:8px; max-width:420px; }
+  .stage-edit-row .d{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .stage-edit-row input{ flex:1; background:none; border:none; outline:none; font-size:13px; color:var(--white); font-family:'Inter',sans-serif; font-weight:600; }
+  .stage-edit-row .rm{ background:none; border:none; color:var(--muted-2); cursor:pointer; font-size:15px; padding:2px 6px; }
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border-soft); max-width:420px; }
+  .toggle-row:last-child{ border-bottom:none; }
+  .toggle-row .t{ font-size:13.5px; font-weight:600; }
+  .toggle-row .s{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .switch{ width:38px; height:22px; border-radius:20px; background:var(--panel-2); border:1px solid var(--border); position:relative; cursor:pointer; flex-shrink:0; }
+  .switch::after{ content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--muted-2); transition:.15s; }
+  .switch.on{ background:var(--accent); border-color:var(--accent); }
+  .switch.on::after{ left:18px; background:var(--on-accent); }
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--accent); color:var(--on-accent); padding:11px 20px; border-radius:10px; font-size:13px; font-weight:600; opacity:0; pointer-events:none; transition:.2s; z-index:200; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---------- INVOICES / CONTRACTS / EXPENSES / DATACHECK ---------- */
+  .expense-row{ display:flex; align-items:center; gap:12px; padding:12px 20px; border-top:1px solid var(--border-soft); }
+  .expense-row:first-child{ border-top:none; }
+  .expense-icon{ width:32px; height:32px; border-radius:9px; background:var(--panel-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .expense-icon svg{ width:15px; height:15px; color:var(--accent); }
+  .expense-name{ font-size:13.5px; font-weight:700; }
+  .expense-cat{ font-size:11.5px; color:var(--muted); }
+  .expense-amt{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13.5px; width:90px; text-align:right; }
+  .expense-next{ font-size:11.5px; color:var(--muted-2); font-family:'JetBrains Mono',monospace; width:90px; text-align:right; }
+
+  .issue-item{ display:flex; align-items:flex-start; gap:12px; padding:14px 20px; border-top:1px solid var(--border-soft); }
+  .issue-item:first-child{ border-top:none; }
+  .sev-pill{ font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; flex-shrink:0; white-space:nowrap; margin-top:1px; }
+  .issue-title{ font-size:13.5px; font-weight:700; margin-bottom:3px; }
+  .issue-desc{ font-size:12.5px; color:var(--muted); line-height:1.5; }
+  .issue-actions{ margin-left:auto; display:flex; gap:8px; flex-shrink:0; }
+  .health-ring{ width:110px; height:110px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; position:relative; }
+  .health-ring::before{ content:''; position:absolute; inset:13px; background:var(--panel); border-radius:50%; }
+  .health-label{ position:relative; z-index:1; text-align:center; }
+  .health-label .n{ font-size:20px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+  .health-label .l{ font-size:9.5px; color:var(--muted); }
+  .contract-progress{ width:80px; height:5px; border-radius:3px; background:var(--panel-2); overflow:hidden; display:inline-block; vertical-align:middle; }
+  .contract-progress span{ display:block; height:100%; border-radius:3px; }
+
+  @media (max-width: 1080px){
+    .stats-row{ grid-template-columns:repeat(2,1fr); }
+    .content-grid, .bottom-grid, .detail-grid, .report-grid{ grid-template-columns:1fr; }
+    .pipeline-cols, .kanban{ grid-template-columns:repeat(2,1fr); }
+    .team-grid{ grid-template-columns:repeat(2,1fr); }
+    .settings-layout{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="data:image/png;base64,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" alt="NextCRM" style="height:26px; width:auto; display:block;">
+    </div>
+
+    <div class="nav-label">Werkruimte</div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard" onclick="showView('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-view="contacts" onclick="showView('contacts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5c1.7.4 3 2 3 3.9s-1.3 3.5-3 3.9"/><path d="M18.5 14.3c2 .6 3.5 2.6 3.5 5"/></svg>
+        Contacten <span class="nav-count" id="navCountContacts">8</span>
+      </button>
+      <button class="nav-item" data-view="deals" onclick="showView('deals')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/><path d="M12 11l8-4.5M12 11v9M12 11L4 6.5"/></svg>
+        Deals <span class="nav-count" id="navCountDeals">12</span>
+      </button>
+      <button class="nav-item" data-view="pipeline" onclick="showView('pipeline')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h18M3 12h18M3 19h18" stroke-linecap="round"/><circle cx="7" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="10" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>
+        Pipeline
+      </button>
+      <button class="nav-item" data-view="tasks" onclick="showView('tasks')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.3 2.3L16 9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Taken <span class="nav-count" id="navCountTasks">6</span>
+      </button>
+      <button class="nav-item" data-view="calendar" onclick="showView('calendar')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        Kalender
+      </button>
+      <button class="nav-item" data-view="reports" onclick="showView('reports')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h16M8 15v-4M12.5 15V7M17 15v-7"/></svg>
+        Rapporten
+      </button>
+    </nav>
+
+    <div class="nav-label">Financieel</div>
+    <nav class="nav">
+      <button class="nav-item" data-view="invoices" onclick="showView('invoices')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h10l2 2v16l-3-2-3 2-3-2-3 2V5z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
+        Facturen <span class="nav-count" id="navCountInvoicesOpen">0</span>
+      </button>
+      <button class="nav-item" data-view="contracts" onclick="showView('contracts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9 12h6M9 16h6"/></svg>
+        Contracten
+      </button>
+      <button class="nav-item" data-view="expenses" onclick="showView('expenses')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/></svg>
+        Maandelijkse lasten
+      </button>
+      <button class="nav-item" data-view="yearoverview" onclick="showView('yearoverview')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 14v3M12 10v7M16 7v10"/></svg>
+        Jaaroverzicht
+      </button>
+    </nav>
+
+    <div class="nav-label">Beheer</div>
+    <nav class="nav">
+      <button class="nav-item" data-view="team" onclick="showView('team')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.6"/><path d="M2 20c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5"/><path d="M14.5 15c2.6.4 4.5 2.4 4.5 5"/></svg>
+        Team
+      </button>
+      <button class="nav-item" data-view="datacheck" onclick="showView('datacheck')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        Datacontrole <span class="nav-count" id="navCountDatacheck">0</span>
+      </button>
+      <button class="nav-item" data-view="settings" onclick="showView('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 000-2l2-1.5-2-3.4-2.4.6a8 8 0 00-1.7-1L14.8 3h-4l-.5 2.7a8 8 0 00-1.7 1l-2.4-.6-2 3.4L5.6 11a7.9 7.9 0 000 2l-2 1.5 2 3.4 2.4-.6a8 8 0 001.7 1l.5 2.7h4l.5-2.7a8 8 0 001.7-1l2.4.6 2-3.4-2-1.5z"/></svg>
+        Instellingen
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="upgrade-card">
+        <div class="lbl">Ga naar Pro</div>
+        <div class="sub">Onbeperkt contacten en geautomatiseerde pipelines voor je team.</div>
+        <button class="btn-mini">Upgraden</button>
+      </div>
+      <div class="user-row" id="profileRow" onclick="toggleProfileMenu(event)" style="cursor:pointer; position:relative;">
+        <div class="avatar">NL</div>
+        <div>
+          <div class="who">Nextlayer B.V.</div>
+          <div class="role">Team-omgeving</div>
+        </div>
+        <div class="notif-dropdown" id="profileMenu" style="left:0; right:auto; bottom:calc(100% + 8px); top:auto; width:100%;">
+          <div class="cmdk-item" onclick="showView('settings'); event.stopPropagation();"><div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 000-2l2-1.5-2-3.4-2.4.6a8 8 0 00-1.7-1L14.8 3h-4l-.5 2.7a8 8 0 00-1.7 1l-2.4-.6-2 3.4L5.6 11a7.9 7.9 0 000 2l-2 1.5 2 3.4 2.4-.6a8 8 0 001.7 1l.5 2.7h4l.5-2.7a8 8 0 001.7-1l2.4.6 2-3.4-2-1.5z"/></svg></div><div><div class="ci-title">Profiel &amp; instellingen</div></div></div>
+          <div class="cmdk-item" onclick="showToast('Uitgelogd (demo)'); event.stopPropagation();"><div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></div><div><div class="ci-title">Uitloggen</div></div></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="icon-btn hamburger-btn" onclick="toggleMobileSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg>
+      </div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+        <input type="text" id="globalSearchInput" placeholder="Zoek contacten, deals, bedrijven..." autocomplete="off">
+        <span class="cmdk-hint" onclick="openCmdk(event)">⌘K</span>
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+      <div class="top-actions">
+        <div class="icon-btn" id="notifBtn" onclick="toggleNotif(event)">
+          <div class="dot" id="notifDot" style="display:none;"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+          <div class="notif-dropdown" id="notifDropdown">
+            <div class="notif-head"><b>Meldingen</b><span class="btn-ghost" onclick="markAllRead(event)">Alles gelezen</span></div>
+            <div class="activity-list" id="notifList">
+              <div class="sd-empty" style="padding:20px;">Geen meldingen</div>
+            </div>
+          </div>
+        </div>
+        <div class="icon-btn" onclick="showView('calendar')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>
+        </div>
+        <button class="btn-primary" id="primaryActionBtn" onclick="primaryAction()">+ Nieuwe deal</button>
+      </div>
+    </div>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="view-dashboard" class="view active">
+      <div class="header-block">
+        <div class="eyebrow">Nextlayer · Sales-overzicht</div>
+        <div class="welcome">Welkom bij <span class="accentword">NextCRM</span></div>
+        <div class="subline">Nog geen gegevens — voeg je eerste contact, deal of taak toe om te beginnen.</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Open deals</div><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div></div>
+          <div class="stat-value">0</div><div class="stat-delta">Nog geen deals</div>
+        </div>
+        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Contacten</div><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div></div>
+          <div class="stat-value">0</div><div class="stat-delta">Nog geen contacten</div>
+        </div>
+        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Omzet gesloten</div><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1v22M17 5.5c0-1.9-2-3-5-3s-5 1.4-5 3.3 2 2.9 5 3.4 5 1.4 5 3.4-2 3.3-5 3.3-5-1.1-5-3"/></svg></div></div>
+          <div class="stat-value">€0</div><div class="stat-delta">Nog geen omzet</div>
+        </div>
+        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--amber);"></span></div>
+          <div class="stat-top"><div class="stat-name">Win rate</div><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 12l2.3 2.3L16 9"/><circle cx="12" cy="12" r="9"/></svg></div></div>
+          <div class="stat-value">—</div><div class="stat-delta">Nog niet genoeg data</div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Actieve deals</div><div class="chip-select">Deze maand ▾</div></div>
+          <table class="deal-table"><thead><tr><th>Bedrijf</th><th>Fase</th><th>Waarde</th><th>Kans</th><th>Sluit</th></tr></thead>
+            <tbody id="dashDealsBody"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Recente activiteit</div></div>
+          <div class="activity-list">
+            <div class="sd-empty" style="padding:30px;">Nog geen activiteit. Zodra je aan de slag gaat met contacten, deals en taken, verschijnt hier je tijdlijn.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-grid">
+        <div class="panel chart-wrap">
+          <div class="panel-title" style="margin-bottom:2px;">Deals per dag</div>
+          <div class="subline" style="font-size:12px; margin-bottom:10px;">Deze week gesloten of verplaatst</div>
+          <div class="chart-bars">
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">0</div><div class="bar-label">Ma</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">0</div><div class="bar-label">Di</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">0</div><div class="bar-label">Wo</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">0</div><div class="bar-label">Do</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">0</div><div class="bar-label">Vr</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Pipeline overzicht</div><div class="chip-select" onclick="showView('pipeline')">Volledig bord ▾</div></div>
+          <div class="pipeline-cols" id="dashPipelineCols"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONTACTS ============ -->
+    <section id="view-contacts" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Contacten</div><div class="page-sub" id="contactsCount">8 contacten</div></div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-wrap" style="width:280px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="contactsFilterInput" placeholder="Filter op naam of bedrijf..." oninput="contactsPage=1; renderContacts();">
+        </div>
+        <div class="filter-chip active" id="chip-tag-all" onclick="setContactTag('all')">Alle</div>
+        <div class="filter-chip" id="chip-tag-klant" onclick="setContactTag('Klant')">Klant</div>
+        <div class="filter-chip" id="chip-tag-lead" onclick="setContactTag('Lead')">Lead</div>
+        <div class="filter-chip" id="chip-tag-prospect" onclick="setContactTag('Prospect')">Prospect</div>
+        <button class="btn-secondary" style="margin-left:auto;" onclick="exportContactsCSV()">⬇ CSV</button>
+      </div>
+      <div class="panel">
+        <table class="deal-table">
+          <thead><tr><th>Naam</th><th>Bedrijf</th><th>E-mail</th><th>Tag</th><th>Laatste contact</th></tr></thead>
+          <tbody id="contactsBody"></tbody>
+        </table>
+        <div id="contactsPagination"></div>
+      </div>
+    </section>
+
+    <!-- ============ CONTACT DETAIL ============ -->
+    <section id="view-contact-detail" class="view">
+      <div class="back-link" onclick="showView('contacts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Contacten</div>
+      <div class="detail-head">
+        <div class="detail-avatar" id="cdAvatar">FG</div>
+        <div>
+          <div class="detail-name" id="cdName">—</div>
+          <div class="detail-meta" id="cdMeta">—</div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn-secondary" id="cdMailBtn" onclick="window.location.href='mailto:'+cdCurrentEmail()">✉ Mail</button>
+          <button class="btn-secondary" id="cdCallBtn" onclick="window.location.href='tel:'+cdCurrentPhone()">☎ Bel</button>
+          <button class="btn-secondary" onclick="openFormModal('contact', currentContactId)">Bewerken</button>
+          <button class="btn-primary" onclick="showView('tasks')">+ Taak</button>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Tijdlijn &amp; notities</div></div>
+          <div class="activity-list" id="cdTimeline"></div>
+          <div class="note-input-row">
+            <input type="text" id="cdNoteInput" placeholder="Notitie toevoegen...">
+            <button class="btn-primary" onclick="addContactNote()">Toevoegen</button>
+          </div>
+        </div>
+        <div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><div class="panel-title">Details</div></div>
+            <div class="info-list" id="cdInfo"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Gekoppelde deals</div></div>
+            <div id="cdDeals" style="padding:6px 8px 14px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DEALS (LIST) ============ -->
+    <section id="view-deals" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Deals</div><div class="page-sub" id="dealsCount">12 deals · € 141.750 totale waarde</div></div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-wrap" style="width:280px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="dealsFilterInput" placeholder="Filter op bedrijf..." oninput="dealsPage=1; renderDealsList();">
+        </div>
+        <select class="chip-select" id="dealsSort" onchange="renderDealsList()">
+          <option value="amount-desc">Waarde: hoog → laag</option>
+          <option value="amount-asc">Waarde: laag → hoog</option>
+          <option value="close-asc">Sluitdatum: eerst</option>
+        </select>
+        <button class="btn-secondary" onclick="exportDealsCSV()">⬇ CSV</button>
+        <div class="chip-toggle" style="margin-left:auto;">
+          <button class="active">Lijst</button>
+          <button onclick="showView('pipeline')">Pipeline</button>
+        </div>
+      </div>
+      <div class="panel">
+        <table class="deal-table">
+          <thead><tr><th>Bedrijf</th><th>Fase</th><th>Waarde</th><th>Kans</th><th>Sluit</th></tr></thead>
+          <tbody id="dealsListBody"></tbody>
+        </table>
+        <div id="dealsPagination"></div>
+      </div>
+    </section>
+
+    <!-- ============ PIPELINE (KANBAN) ============ -->
+    <section id="view-pipeline" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Pipeline</div><div class="page-sub">Sleep deals tussen fases om de status bij te werken</div></div>
+        <div class="chip-toggle">
+          <button onclick="showView('deals')">Lijst</button>
+          <button class="active">Pipeline</button>
+        </div>
+      </div>
+      <div class="kanban" id="kanbanBoard"></div>
+    </section>
+
+    <!-- ============ DEAL DETAIL ============ -->
+    <section id="view-deal-detail" class="view">
+      <div class="back-link" onclick="showView('pipeline')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Pipeline</div>
+      <div class="detail-head">
+        <div class="detail-avatar" id="ddLogo" style="border-radius:14px;">OR</div>
+        <div>
+          <div class="detail-name" id="ddName">—</div>
+          <div class="detail-meta" id="ddMeta">—</div>
+        </div>
+        <div class="detail-actions">
+          <select class="chip-select" id="ddStageSelect" onchange="changeDealStage()"></select>
+          <button class="btn-secondary" onclick="openFormModal('deal', currentDealId)">Bewerken</button>
+          <button class="btn-primary" onclick="window.location.href='mailto:'+ddCurrentEmail()">✉ Mail sturen</button>
+        </div>
+      </div>
+      <div class="ai-summary">
+        <div class="ai-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.9L19 9.5l-4.9 1.8L12 16l-1.8-4.7L5 9.5l4.9-1.8L12 3z"/></svg></div>
+        <div><div class="ai-label">AI-samenvatting</div><p id="ddAiSummary">—</p></div>
+      </div>
+      <div class="detail-grid">
+        <div class="panel">
+          <div class="tabs">
+            <div class="tab active" data-tab="overzicht" onclick="switchDealTab('overzicht')">Overzicht</div>
+            <div class="tab" data-tab="activiteit" onclick="switchDealTab('activiteit')">Activiteit</div>
+            <div class="tab" data-tab="bestanden" onclick="switchDealTab('bestanden')">Bestanden</div>
+          </div>
+          <div id="ddTabOverzicht" class="info-list">
+            <div class="info-row"><span class="k">Bron</span><span class="v" id="ddBron">Website</span></div>
+            <div class="info-row"><span class="k">Eigenaar</span><span class="v" id="ddOwner">—</span></div>
+            <div class="info-row"><span class="k">Aangemaakt op</span><span class="v" id="ddCreated">3 jul 2026</span></div>
+            <div class="info-row"><span class="k">Waarde</span><span class="v amount" id="ddAmount">€ 0</span></div>
+            <div class="info-row"><span class="k">Winkans</span><span class="v" id="ddProb">0%</span></div>
+          </div>
+          <div id="ddTabActiviteit" style="display:none;">
+            <div class="activity-list" id="ddTimeline"></div>
+            <div class="note-input-row">
+              <input type="text" id="ddNoteInput" placeholder="Notitie toevoegen...">
+              <button class="btn-primary" onclick="addDealNote()">Toevoegen</button>
+            </div>
+          </div>
+          <div id="ddTabBestanden" style="display:none; padding:30px 20px; text-align:center; color:var(--muted); font-size:13px;">
+            Nog geen bestanden gekoppeld aan deze deal.
+          </div>
+        </div>
+        <div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><div class="panel-title">Contact</div></div>
+            <div id="ddContactCard" style="padding:14px 20px;"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Volgende stappen</div></div>
+            <div class="task-list" id="ddTasks"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TASKS ============ -->
+    <section id="view-tasks" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Taken</div><div class="page-sub" id="tasksCount">6 openstaande taken</div></div>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-chip active" id="chip-task-all" onclick="setTaskFilter('all')">Alle</div>
+        <div class="filter-chip" id="chip-task-open" onclick="setTaskFilter('open')">Open</div>
+        <div class="filter-chip" id="chip-task-done" onclick="setTaskFilter('done')">Afgerond</div>
+      </div>
+      <div class="panel">
+        <div class="task-add">
+          <input type="text" id="newTaskInput" placeholder="Nieuwe taak toevoegen...">
+          <select id="newTaskPrio"><option value="hoog">Hoog</option><option value="normaal" selected>Normaal</option><option value="laag">Laag</option></select>
+          <button class="btn-primary" onclick="addTask()">+ Toevoegen</button>
+        </div>
+        <div class="task-list" id="tasksBody"></div>
+      </div>
+    </section>
+
+    <!-- ============ CALENDAR ============ -->
+    <section id="view-calendar" class="view">
+      <div class="page-head"><div><div class="page-title">Kalender</div><div class="page-sub">Afspraken en deadlines</div></div></div>
+      <div class="panel">
+        <div class="cal-head">
+          <div class="cal-month" id="calMonthLabel">Augustus 2026</div>
+          <div class="cal-nav">
+            <button onclick="changeMonth(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <button onclick="changeMonth(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+    </section>
+
+    <!-- ============ REPORTS ============ -->
+    <section id="view-reports" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Rapporten</div><div class="page-sub">Prestaties over de laatste 6 maanden</div></div>
+        <div class="chip-select">Laatste 6 maanden ▾</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Pipeline-waarde</div></div><div class="stat-value">€0</div><div class="stat-delta">Over <b>0</b> open deals</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Gem. dealgrootte</div></div><div class="stat-value">€0</div><div class="stat-delta">Nog geen data</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--amber);"></span></div>
+          <div class="stat-top"><div class="stat-name">Gem. doorlooptijd</div></div><div class="stat-value">—</div><div class="stat-delta">Van eerste contact tot close</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:0%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Forecast deze maand</div></div><div class="stat-value">€0</div><div class="stat-delta">Gewogen op winkans</div></div>
+      </div>
+
+      <div class="report-grid">
+        <div class="panel chart-wrap">
+          <div class="panel-title" style="margin-bottom:14px;">Omzet per maand</div>
+          <div class="chart-bars">
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">€0</div><div class="bar-label">Mrt</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">€0</div><div class="bar-label">Apr</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">€0</div><div class="bar-label">Mei</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">€0</div><div class="bar-label">Jun</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">€0</div><div class="bar-label">Jul</div></div>
+            <div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:2%;"></div></div><div class="bar-pct">€0</div><div class="bar-label">Aug</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Win rate</div></div>
+          <div class="donut-wrap">
+            <div class="donut" id="winRateDonut" data-pct="0" style="background:conic-gradient(var(--panel-2) 0% 100%);">
+              <div class="donut-label"><div class="n">—</div><div class="l">gewonnen</div></div>
+            </div>
+            <div class="legend">
+              <div class="legend-item"><span class="legend-dot" style="background:var(--accent);"></span>Gewonnen — 0%</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--panel-2); border:1px solid var(--border);"></span>Verloren — 0%</div>
+              <div class="legend-item" style="color:var(--muted); font-size:11.5px; margin-top:4px;">Nog geen gesloten deals</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Prestatie per verkoper</div></div>
+        <table class="deal-table rep-table">
+          <thead><tr><th>Naam</th><th>Deals gewonnen</th><th>Omzet</th><th>Win rate</th></tr></thead>
+          <tbody id="repTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ TEAM ============ -->
+    <section id="view-team" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Team</div><div class="page-sub">5 teamleden</div></div>
+        <button class="btn-primary">+ Teamlid uitnodigen</button>
+      </div>
+      <div class="team-grid" id="teamGrid"></div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="view-settings" class="view">
+      <div class="page-head"><div><div class="page-title">Instellingen</div><div class="page-sub">Beheer je NextCRM-omgeving</div></div></div>
+      <div class="settings-layout">
+        <div class="settings-nav">
+          <button class="active" data-stab="profiel" onclick="switchSettingsTab('profiel')">Bedrijfsprofiel</button>
+          <button data-stab="pipeline" onclick="switchSettingsTab('pipeline')">Pipeline-fases</button>
+          <button data-stab="handtekening" onclick="switchSettingsTab('handtekening')">E-mailhandtekening</button>
+          <button data-stab="notificaties" onclick="switchSettingsTab('notificaties')">Notificaties</button>
+        </div>
+        <div class="panel">
+          <div class="settings-panel" id="stab-profiel">
+            <div class="form-row"><label>Bedrijfsnaam</label><input type="text" value="Nextlayer B.V."></div>
+            <div class="form-row"><label>E-mailadres</label><input type="email" value="" placeholder="jouw@nextlayer.nl"></div>
+            <div class="form-row"><label>Website</label><input type="text" value="" placeholder="www.nextlayer.nl"></div>
+            <div class="form-row"><label>Tijdzone</label><select><option>Europe/Amsterdam (UTC+2)</option><option>Europe/London (UTC+1)</option></select></div>
+            <button class="btn-primary" onclick="showToast('Bedrijfsprofiel opgeslagen')">Opslaan</button>
+          </div>
+          <div class="settings-panel" id="stab-pipeline" style="display:none;">
+            <div id="stageEditList"></div>
+            <div style="display:flex; gap:8px; max-width:420px; margin-top:10px;">
+              <input type="text" id="newStageInput" placeholder="Nieuwe fase..." style="flex:1; border:1px solid var(--border); background:var(--panel-2); border-radius:9px; padding:9px 12px; font-size:13px; outline:none; color:var(--white);">
+              <button class="btn-secondary" onclick="addStage()">+ Toevoegen</button>
+            </div>
+          </div>
+          <div class="settings-panel" id="stab-handtekening" style="display:none;">
+            <div class="form-row" style="max-width:420px;">
+              <label>Handtekening</label>
+              <textarea>Met vriendelijke groet,
+
+[Jouw naam]
+Nextlayer B.V.
+[jouw@nextlayer.nl]</textarea>
+            </div>
+            <button class="btn-primary" onclick="showToast('Handtekening opgeslagen')">Opslaan</button>
+          </div>
+          <div class="settings-panel" id="stab-notificaties" style="display:none;">
+            <div class="toggle-row"><div><div class="t">Nieuwe deal aangemaakt</div><div class="s">Melding wanneer een teamlid een deal toevoegt</div></div><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="toggle-row"><div><div class="t">Taak-deadline</div><div class="s">Herinnering een dag van tevoren</div></div><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="toggle-row"><div><div class="t">Contact reageert</div><div class="s">Bij inkomende e-mail van een contact</div></div><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="toggle-row"><div><div class="t">Wekelijkse samenvatting</div><div class="s">Elke maandagochtend in je inbox</div></div><div class="switch" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INVOICES ============ -->
+    <section id="view-invoices" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Facturen</div><div class="page-sub" id="invoicesSub">—</div></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="layerbar"><span style="height:90%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Totaal gefactureerd</div></div><div class="stat-value" id="invStatTotal">—</div><div class="stat-delta">Dit boekjaar</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:70%;background:var(--amber);"></span></div>
+          <div class="stat-top"><div class="stat-name">Openstaand</div></div><div class="stat-value" id="invStatOpen">—</div><div class="stat-delta"><span id="invStatOpenCount">—</span> facturen</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:45%;background:var(--coral);"></span></div>
+          <div class="stat-top"><div class="stat-name">Te laat</div></div><div class="stat-value" id="invStatLate">—</div><div class="stat-delta"><span id="invStatLateCount">—</span> facturen over datum</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:80%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Betaald deze maand</div></div><div class="stat-value" id="invStatPaid">—</div><div class="stat-delta">Augustus 2026</div></div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-wrap" style="width:260px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="invoicesFilterInput" placeholder="Zoek op klant of factuurnr..." oninput="invoicesPage=1; renderInvoices();">
+        </div>
+        <div class="filter-chip active" id="chip-inv-all" onclick="setInvoiceFilter('all')">Alle</div>
+        <div class="filter-chip" id="chip-inv-open" onclick="setInvoiceFilter('open')">Openstaand</div>
+        <div class="filter-chip" id="chip-inv-betaald" onclick="setInvoiceFilter('betaald')">Betaald</div>
+        <div class="filter-chip" id="chip-inv-telaat" onclick="setInvoiceFilter('te laat')">Te laat</div>
+        <button class="btn-secondary" style="margin-left:auto;" onclick="exportInvoicesCSV()">⬇ CSV</button>
+      </div>
+      <div class="panel">
+        <table class="deal-table">
+          <thead><tr><th>Factuurnr</th><th>Klant</th><th>Bedrag</th><th>Status</th><th>Vervaldatum</th></tr></thead>
+          <tbody id="invoicesBody"></tbody>
+        </table>
+        <div id="invoicesPagination"></div>
+      </div>
+    </section>
+
+    <!-- ============ INVOICE DETAIL ============ -->
+    <section id="view-invoice-detail" class="view">
+      <div class="back-link" onclick="showView('invoices')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Facturen</div>
+      <div class="detail-head">
+        <div class="detail-avatar" id="invLogo" style="border-radius:14px;">FA</div>
+        <div>
+          <div class="detail-name" id="invName">—</div>
+          <div class="detail-meta" id="invMeta">—</div>
+        </div>
+        <div class="detail-actions">
+          <span id="invStatusPill"></span>
+          <button class="btn-secondary" onclick="openFormModal('invoice', currentInvoiceId)">Bewerken</button>
+          <button class="btn-secondary" onclick="printInvoice()">⬇ PDF</button>
+          <button class="btn-primary" id="invMarkPaidBtn" onclick="markInvoicePaid()">Markeer als betaald</button>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Factuurregels</div></div>
+          <table class="deal-table">
+            <thead><tr><th>Omschrijving</th><th>Aantal</th><th>Prijs</th><th>Totaal</th></tr></thead>
+            <tbody id="invItemsBody"></tbody>
+          </table>
+          <div class="info-list" style="border-top:1px solid var(--border-soft);">
+            <div class="info-row"><span class="k">Subtotaal</span><span class="v" id="invSubtotal">—</span></div>
+            <div class="info-row"><span class="k">BTW (21%)</span><span class="v" id="invVat">—</span></div>
+            <div class="info-row"><span class="k" style="font-weight:700; color:var(--white);">Totaal</span><span class="v amount" id="invTotal" style="font-size:15px;">—</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><div class="panel-title">Details</div></div>
+            <div class="info-list">
+              <div class="info-row"><span class="k">Klant</span><span class="v" id="invClient">—</span></div>
+              <div class="info-row"><span class="k">Factuurdatum</span><span class="v" id="invIssueDate">—</span></div>
+              <div class="info-row"><span class="k">Vervaldatum</span><span class="v" id="invDueDate">—</span></div>
+              <div class="info-row"><span class="k">Gekoppelde deal</span><span class="v" id="invDealLink">—</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Betaalstatus</div></div>
+            <div class="activity-list" id="invTimeline"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONTRACTS ============ -->
+    <section id="view-contracts" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Contracten</div><div class="page-sub" id="contractsSub">—</div></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="layerbar"><span style="height:90%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Actieve contracten</div></div><div class="stat-value" id="conStatActive">—</div><div class="stat-delta">Van totaal <span id="conStatTotalCount">—</span></div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:80%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Totale contractwaarde</div></div><div class="stat-value" id="conStatValue">—</div><div class="stat-delta">Op jaarbasis</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:55%;background:var(--amber);"></span></div>
+          <div class="stat-top"><div class="stat-name">Verloopt binnen 30 dagen</div></div><div class="stat-value" id="conStatExpiring">—</div><div class="stat-delta">Actie vereist</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:65%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Gem. contractduur</div></div><div class="stat-value" id="conStatDuration">—</div><div class="stat-delta">Maanden</div></div>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-chip active" id="chip-con-all" onclick="setContractFilter('all')">Alle</div>
+        <div class="filter-chip" id="chip-con-actief" onclick="setContractFilter('actief')">Actief</div>
+        <div class="filter-chip" id="chip-con-verloopt" onclick="setContractFilter('verloopt binnenkort')">Verloopt binnenkort</div>
+        <div class="filter-chip" id="chip-con-verlopen" onclick="setContractFilter('verlopen')">Verlopen</div>
+        <button class="btn-secondary" style="margin-left:auto;" onclick="exportContractsCSV()">⬇ CSV</button>
+      </div>
+      <div class="panel">
+        <table class="deal-table">
+          <thead><tr><th>Klant</th><th>Type</th><th>Waarde/jaar</th><th>Startdatum</th><th>Einddatum</th><th>Status</th></tr></thead>
+          <tbody id="contractsBody"></tbody>
+        </table>
+        <div id="contractsPagination"></div>
+      </div>
+    </section>
+
+    <!-- ============ CONTRACT DETAIL ============ -->
+    <section id="view-contract-detail" class="view">
+      <div class="back-link" onclick="showView('contracts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Contracten</div>
+      <div class="detail-head">
+        <div class="detail-avatar" id="conLogo" style="border-radius:14px;">CO</div>
+        <div>
+          <div class="detail-name" id="conName">—</div>
+          <div class="detail-meta" id="conMeta">—</div>
+        </div>
+        <div class="detail-actions">
+          <span id="conStatusPill"></span>
+          <button class="btn-secondary" onclick="openFormModal('contract', currentContractId)">Bewerken</button>
+          <button class="btn-secondary" onclick="printContract()">⬇ PDF</button>
+          <button class="btn-primary" onclick="showToast('Verlenging voorgesteld')">Verlengen</button>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Contractvoorwaarden</div></div>
+          <div class="info-list">
+            <div class="info-row"><span class="k">Type</span><span class="v" id="conType">—</span></div>
+            <div class="info-row"><span class="k">Jaarwaarde</span><span class="v amount" id="conValue">—</span></div>
+            <div class="info-row"><span class="k">Startdatum</span><span class="v" id="conStart">—</span></div>
+            <div class="info-row"><span class="k">Einddatum</span><span class="v" id="conEnd">—</span></div>
+            <div class="info-row"><span class="k">Automatische verlenging</span><span class="v" id="conAutoRenew">—</span></div>
+            <div class="info-row"><span class="k">Opzegtermijn</span><span class="v">1 maand</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><div class="panel-title">Klant</div></div>
+            <div id="conContactCard" style="padding:14px 20px;"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Gekoppelde facturen</div></div>
+            <div id="conInvoices" style="padding:6px 8px 14px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MONTHLY EXPENSES ============ -->
+    <section id="view-expenses" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Maandelijkse lasten</div><div class="page-sub" id="expSub">—</div></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="layerbar"><span style="height:80%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Totaal per maand</div></div><div class="stat-value" id="expStatMonthly">—</div><div class="stat-delta"><span id="expStatCount">—</span> actieve posten</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:80%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Jaarlijks totaal</div></div><div class="stat-value" id="expStatYearly">—</div><div class="stat-delta">Bij ongewijzigd verbruik</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:60%;background:var(--amber);"></span></div>
+          <div class="stat-top"><div class="stat-name">Grootste kostenpost</div></div><div class="stat-value" id="expStatBiggest" style="font-size:18px;">—</div><div class="stat-delta" id="expStatBiggestAmt">—</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:40%;background:var(--muted-2);"></span></div>
+          <div class="stat-top"><div class="stat-name">Gepauzeerd</div></div><div class="stat-value" id="expStatPaused">—</div><div class="stat-delta">Niet meegeteld in totaal</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Vaste lasten &amp; abonnementen</div></div>
+        <div id="expensesBody"></div>
+        <div class="task-add">
+          <input type="text" id="newExpName" placeholder="Naam (bv. Boekhoudsoftware)...">
+          <select id="newExpCat"><option>Software</option><option>Huisvesting</option><option>Marketing</option><option>Verzekering</option><option>Overig</option></select>
+          <input type="text" id="newExpAmt" placeholder="€ per maand" style="width:110px; border:1px solid var(--border); background:var(--panel-2); border-radius:9px; padding:9px 12px; font-size:13px; outline:none; color:var(--white); font-family:'Inter',sans-serif;">
+          <button class="btn-primary" onclick="addExpense()">+ Toevoegen</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ YEAR OVERVIEW ============ -->
+    <section id="view-yearoverview" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Jaaroverzicht</div><div class="page-sub">Boekjaar 2026 · januari t/m augustus, met prognose</div></div>
+        <div class="chip-select">2026 ▾</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="layerbar"><span style="height:90%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Jaaromzet t/m nu</div></div><div class="stat-value" id="yoRevenue">—</div><div class="stat-delta"><b id="yoRevenueGrowth">—</b> t.o.v. 2025</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:55%;background:var(--coral);"></span></div>
+          <div class="stat-top"><div class="stat-name">Totale lasten</div></div><div class="stat-value" id="yoCosts">—</div><div class="stat-delta">Vaste + operationele kosten</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:75%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Nettoresultaat</div></div><div class="stat-value" id="yoNet">—</div><div class="stat-delta">Voor belasting</div></div>
+        <div class="stat-card"><div class="layerbar"><span style="height:65%;background:var(--accent);"></span></div>
+          <div class="stat-top"><div class="stat-name">Deals gewonnen</div></div><div class="stat-value" id="yoWonDeals">—</div><div class="stat-delta">Dit boekjaar</div></div>
+      </div>
+      <div class="panel chart-wrap" style="margin-bottom:16px;">
+        <div class="panel-title" style="margin-bottom:14px;">Omzet vs. lasten per maand</div>
+        <div class="chart-bars" id="yoChart" style="gap:8px;"></div>
+      </div>
+      <div class="content-grid">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Per kwartaal</div></div>
+          <table class="deal-table">
+            <thead><tr><th>Kwartaal</th><th>Omzet</th><th>Lasten</th><th>Netto</th></tr></thead>
+            <tbody id="yoQuarterBody"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Kerncijfers</div></div>
+          <div class="info-list">
+            <div class="info-row"><span class="k">Nieuwe contacten dit jaar</span><span class="v" id="yoNewContacts">—</span></div>
+            <div class="info-row"><span class="k">Gem. dealgrootte</span><span class="v" id="yoAvgDeal">—</span></div>
+            <div class="info-row"><span class="k">Win rate</span><span class="v">62%</span></div>
+            <div class="info-row"><span class="k">Actieve contracten</span><span class="v" id="yoActiveContracts">—</span></div>
+            <div class="info-row"><span class="k">Gem. maandelijkse lasten</span><span class="v" id="yoAvgExpense">—</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DATA CHECK ============ -->
+    <section id="view-datacheck" class="view">
+      <div class="page-head">
+        <div><div class="page-title">Datacontrole</div><div class="page-sub">Automatische check op ontbrekende of afwijkende gegevens</div></div>
+        <button class="btn-secondary" onclick="showToast('Nieuwe controle gestart — alles is up-to-date')">↻ Opnieuw controleren</button>
+      </div>
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="donut-wrap">
+          <div class="health-ring" id="healthRing">
+            <div class="health-label"><div class="n" id="healthScore">—</div><div class="l">datakwaliteit</div></div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-dot" style="background:var(--coral);"></span><span id="sevHighCount">—</span> hoge prioriteit</div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--amber);"></span><span id="sevMedCount">—</span> gemiddelde prioriteit</div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--muted-2);"></span><span id="sevLowCount">—</span> lage prioriteit</div>
+            <div class="legend-item" style="color:var(--muted); font-size:11.5px; margin-top:4px;" id="checkedSummary">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Gevonden aandachtspunten</div></div>
+        <div id="issuesBody"></div>
+      </div>
+    </section>
+
+    <footer class="credit">NextCRM — gebouwd voor Nextlayer</footer>
+  </main>
+</div>
+
+<div class="cmdk-overlay" id="cmdkOverlay" onmousedown="if(event.target===this) closeCmdk()">
+  <div class="cmdk-modal">
+    <div class="cmdk-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+      <input type="text" id="cmdkInput" placeholder="Typ een commando of zoek naar contacten, deals, facturen..." autocomplete="off">
+      <span class="cmdk-esc">esc</span>
+    </div>
+    <div class="cmdk-results" id="cmdkResults"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="formOverlay" onmousedown="if(event.target===this) closeFormModal()">
+  <div class="modal-box" id="formBox"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= DATA ================= */
+let stages = [
+  {id:'contact', name:'Eerste contact', color:'var(--muted-2)'},
+  {id:'voorstel', name:'Voorstel', color:'var(--amber)'},
+  {id:'onderhandeling', name:'Onderhandeling', color:'var(--accent)'},
+  {id:'gewonnen', name:'Gewonnen', color:'var(--accent)'},
+  {id:'verloren', name:'Verloren', color:'var(--coral)'},
+];
+
+const contacts = [
+];
+
+const deals = [
+];
+
+let tasks = [
+];
+
+const team = [
+];
+
+const invoices = [
+];
+
+const contracts = [
+];
+
+let expenses = [
+];
+
+let issues = [
+];
+
+const calEvents = {
+};
+
+let contactTagFilter = 'all';
+const PAGE_SIZE = 6;
+let contactsPage = 1, dealsPage = 1, invoicesPage = 1, contractsPage = 1;
+function renderPaginationBar(containerId, totalItems, page, gotoFnName){
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  if(totalPages<=1){ el.innerHTML=''; return; }
+  el.innerHTML =
+    '<div style="display:flex; align-items:center; justify-content:center; gap:14px; padding:14px; border-top:1px solid var(--border-soft);">'+
+    '<button class="btn-secondary" '+(page<=1?'disabled style="opacity:.4; cursor:not-allowed;"':'')+' onclick="'+gotoFnName+'('+(page-1)+')">← Vorige</button>'+
+    '<span style="font-size:12.5px; color:var(--muted);">Pagina '+page+' van '+totalPages+'</span>'+
+    '<button class="btn-secondary" '+(page>=totalPages?'disabled style="opacity:.4; cursor:not-allowed;"':'')+' onclick="'+gotoFnName+'('+(page+1)+')">Volgende →</button>'+
+    '</div>';
+}
+let taskFilter = 'all';
+let currentContactId = null;
+let currentDealId = null;
+let currentInvoiceId = null;
+let currentContractId = null;
+let calYear = 2026, calMonth = 7; // month index 0-based, 7 = August
+
+const primaryActions = {
+  dashboard: {label:'+ Nieuwe deal', fn:()=>showView('deals')},
+  contacts: {label:'+ Nieuw contact', fn:()=>openFormModal('contact')},
+  'contact-detail': {label:'+ Taak', fn:()=>showView('tasks')},
+  deals: {label:'+ Nieuwe deal', fn:()=>openFormModal('deal')},
+  pipeline: {label:'+ Nieuwe deal', fn:()=>openFormModal('deal')},
+  'deal-detail': {label:'✉ Mail sturen', fn:()=>showToast('Mailcomposer volgt binnenkort')},
+  tasks: {label:'+ Nieuwe taak', fn:()=>document.getElementById('newTaskInput').focus()},
+  calendar: {label:'+ Afspraak', fn:()=>showToast('Afspraken plannen volgt binnenkort')},
+  reports: {label:'Exporteren', fn:()=>exportReportsCSV()},
+  team: {label:'+ Teamlid uitnodigen', fn:()=>showToast('Uitnodiging volgt binnenkort')},
+  settings: {label:'Opslaan', fn:()=>showToast('Instellingen opgeslagen')},
+  invoices: {label:'+ Nieuwe factuur', fn:()=>openFormModal('invoice')},
+  'invoice-detail': {label:'⬇ PDF downloaden', fn:()=>showToast('Factuur gedownload als PDF')},
+  contracts: {label:'+ Nieuw contract', fn:()=>openFormModal('contract')},
+  'contract-detail': {label:'Verlengen', fn:()=>showToast('Verlenging voorgesteld')},
+  expenses: {label:'+ Kostenpost', fn:()=>document.getElementById('newExpName').focus()},
+  yearoverview: {label:'Exporteren', fn:()=>exportYearOverviewCSV()},
+  datacheck: {label:'↻ Opnieuw controleren', fn:()=>showToast('Nieuwe controle gestart — alles is up-to-date')},
+};
+
+/* ================= VIEW SWITCHING ================= */
+let currentViewName = 'dashboard';
+const detailViews = ['contact-detail','deal-detail','invoice-detail','contract-detail'];
+function showView(name, opts){
+  const prev = currentViewName;
+  let direction = 'wide';
+  if(detailViews.includes(name) && !detailViews.includes(prev)) direction = 'deep';
+  else if(!detailViews.includes(name) && detailViews.includes(prev)) direction = 'back';
+  else if(detailViews.includes(name) && detailViews.includes(prev)) direction = 'deep';
+
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active','anim-deep','anim-back','anim-wide'));
+  const target = document.getElementById('view-'+name);
+  target.classList.add('active', 'anim-'+direction);
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navMap = {dashboard:'dashboard', contacts:'contacts', 'contact-detail':'contacts', deals:'deals', 'deal-detail':'deals', pipeline:'pipeline', tasks:'tasks', calendar:'calendar', reports:'reports', team:'team', settings:'settings', invoices:'invoices', 'invoice-detail':'invoices', contracts:'contracts', 'contract-detail':'contracts', expenses:'expenses', yearoverview:'yearoverview', datacheck:'datacheck'};
+  const navBtn = document.querySelector('.nav-item[data-view="'+(navMap[name]||name)+'"]');
+  if(navBtn) navBtn.classList.add('active');
+  const pa = primaryActions[name] || primaryActions.dashboard;
+  document.getElementById('primaryActionBtn').textContent = pa.label;
+  window.scrollTo(0,0);
+  runEntranceAnimations(target, name);
+  currentViewName = name;
+  closeMobileSidebar();
+}
+function toggleMobileSidebar(){
+  document.querySelector('.sidebar').classList.toggle('mobile-open');
+  document.getElementById('sidebarBackdrop').classList.toggle('show');
+}
+function closeMobileSidebar(){
+  document.querySelector('.sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarBackdrop').classList.remove('show');
+}
+function primaryAction(){
+  const active = document.querySelector('.view.active').id.replace('view-','');
+  (primaryActions[active] || primaryActions.dashboard).fn();
+}
+
+/* ================= ENTRANCE ANIMATIONS (count-up + ring fill, first visit only) ================= */
+const animatedViews = new Set();
+function countUp(el, duration){
+  duration = duration || 700;
+  const raw = el.textContent.trim();
+  const m = raw.match(/^([^\d]*)(\d+(?:[.,]\d+)?)(.*)$/);
+  if(!m) return;
+  const prefix = m[1], numStr = m[2], suffix = m[3];
+  const sep = numStr.includes(',') ? ',' : '.';
+  const decimals = numStr.includes(sep) ? numStr.split(sep)[1].length : 0;
+  const target = parseFloat(numStr.replace(',', '.'));
+  if(isNaN(target)) return;
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = target * eased;
+    el.textContent = prefix + val.toFixed(decimals).replace('.', sep) + suffix;
+    if(t < 1) requestAnimationFrame(frame); else el.textContent = raw;
+  }
+  requestAnimationFrame(frame);
+}
+function animateRing(el, targetPct, duration){
+  duration = duration || 800;
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const pct = targetPct * eased;
+    el.style.background = 'conic-gradient(var(--accent) 0% ' + pct + '%, var(--panel-2) ' + pct + '% 100%)';
+    if(t < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function runEntranceAnimations(scope, viewName){
+  const firstVisit = !animatedViews.has(viewName);
+  if(firstVisit){
+    animatedViews.add(viewName);
+    scope.querySelectorAll('.stat-value').forEach(el => countUp(el));
+    const donut = scope.querySelector('#winRateDonut');
+    if(donut) animateRing(donut, parseFloat(donut.dataset.pct));
+  }
+  // the data-quality ring always reflects live data, so it re-fills whenever its own value changes
+  // (handled directly in renderDataCheck) rather than only on first visit.
+}
+
+/* ================= TOAST ================= */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ================= STAGE HELPERS ================= */
+function stageInfo(id){ return stages.find(s=>s.id===id) || stages[0]; }
+function fmtEur(n){ return '€ ' + n.toLocaleString('nl-NL'); }
+function initialsColor(c){ return {bg:c.color, text:c.text}; }
+
+function stagePillHTML(stageId){
+  const s = stageInfo(stageId);
+  return '<span class="stage-pill" style="background:color-mix(in srgb, '+s.color+' 15%, white); color:'+s.color+';"><span class="d" style="background:'+s.color+';"></span>'+s.name+'</span>';
+}
+
+/* ================= DASHBOARD RENDER ================= */
+function renderDashboard(){
+  const top = deals.filter(d=>d.stage!=='verloren').sort((a,b)=>b.amount-a.amount).slice(0,5);
+  document.getElementById('dashDealsBody').innerHTML = top.map(d=>{
+    const c = contacts.find(x=>x.id===d.contactId);
+    return '<tr onclick="openDeal('+d.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials.slice(0,2)+'</div><div><div class="deal-co">'+d.company+'</div><div class="deal-contact">'+c.name+'</div></div></div></td><td>'+stagePillHTML(d.stage)+'</td><td class="amount">'+fmtEur(d.amount)+'</td><td class="prob">'+d.prob+'%</td><td class="prob">'+d.close+'</td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:24px;">Nog geen deals. <a href="#" onclick="openFormModal(\'deal\'); return false;" style="color:var(--accent); font-weight:600;">Voeg er een toe</a></td></tr>';
+
+  const cols = stages.filter(s=>s.id!=='verloren');
+  document.getElementById('dashPipelineCols').innerHTML = cols.map(s=>{
+    const inStage = deals.filter(d=>d.stage===s.id);
+    const top2 = inStage.slice(0,2);
+    return '<div><div class="pcol-head"><span class="pcol-name">'+s.name+'</span><span class="pcol-count">'+inStage.length+'</span></div><div class="pcol-bar" style="background:'+s.color+';"></div>'+(top2.length?top2.map(d=>'<div class="pcard"><div class="pname">'+d.company+'</div><div class="pamt">'+fmtEur(d.amount)+'</div></div>').join(''):'<div style="font-size:11.5px; color:var(--muted-2); padding:4px 2px;">Leeg</div>')+'</div>';
+  }).join('');
+}
+
+/* ================= CONTACTS ================= */
+function setContactTag(tag){
+  contactTagFilter = tag;
+  contactsPage = 1;
+  document.querySelectorAll('.filter-bar .filter-chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('chip-tag-'+(tag==='all'?'all':tag.toLowerCase())).classList.add('active');
+  renderContacts();
+}
+function renderContacts(){
+  const q = (document.getElementById('contactsFilterInput').value||'').toLowerCase();
+  let list = contacts.filter(c=> (contactTagFilter==='all' || c.tag===contactTagFilter) && (c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q)) );
+  document.getElementById('contactsCount').textContent = list.length + ' contacten';
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  contactsPage = Math.min(contactsPage, totalPages);
+  const pageItems = list.slice((contactsPage-1)*PAGE_SIZE, contactsPage*PAGE_SIZE);
+  document.getElementById('contactsBody').innerHTML = pageItems.map(c=>
+    '<tr onclick="openContact('+c.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials+'</div><div class="deal-co">'+c.name+'</div></div></td><td>'+c.company+'</td><td class="prob">'+c.email+'</td><td><span class="tag">'+c.tag+'</span></td><td class="prob">'+c.last+'</td></tr>'
+  ).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:28px;">Geen contacten gevonden.<br><button class="btn-secondary" style="margin-top:10px;" onclick=\"openFormModal(&#39;contact&#39;)\">+ Nieuw contact toevoegen</button></td></tr>';
+  renderPaginationBar('contactsPagination', list.length, contactsPage, 'gotoContactsPage');
+}
+function gotoContactsPage(p){ contactsPage = p; renderContacts(); }
+
+function cdCurrentEmail(){ const c = contacts.find(x=>x.id===currentContactId); return c ? c.email : ''; }
+function cdCurrentPhone(){ const c = contacts.find(x=>x.id===currentContactId); return c ? c.phone.replace(/[^\d+]/g,'') : ''; }
+function openContact(id){
+  currentContactId = id;
+  const c = contacts.find(x=>x.id===id);
+  document.getElementById('cdAvatar').textContent = c.initials;
+  document.getElementById('cdAvatar').style.background = 'linear-gradient(135deg,'+c.color+','+c.color+')';
+  document.getElementById('cdName').textContent = c.name;
+  document.getElementById('cdMeta').textContent = c.role + ' bij ' + c.company;
+  document.getElementById('cdInfo').innerHTML =
+    '<div class="info-row"><span class="k">Bedrijf</span><span class="v">'+c.company+'</span></div>'+
+    '<div class="info-row"><span class="k">E-mail</span><span class="v">'+c.email+'</span></div>'+
+    '<div class="info-row"><span class="k">Telefoon</span><span class="v">'+c.phone+'</span></div>'+
+    '<div class="info-row"><span class="k">Tag</span><span class="v"><span class="tag">'+c.tag+'</span></span></div>'+
+    '<div class="info-row"><span class="k">Klant sinds</span><span class="v">'+c.since+'</span></div>';
+
+  document.getElementById('cdTimeline').innerHTML =
+    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12H7l-3 3V4z"/></svg></div><div><div class="act-text">Laatste e-mail contact op <b>'+c.last+'</b></div><div class="act-time">Automatisch gelogd</div></div></div>'+
+    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div><div><div class="act-text">Contact toegevoegd aan NextCRM</div><div class="act-time">'+c.since+'</div></div></div>';
+
+  const cDeals = deals.filter(d=>d.contactId===id);
+  document.getElementById('cdDeals').innerHTML = cDeals.length ? cDeals.map(d=>
+    '<div class="activity-item" style="cursor:pointer;" onclick="openDeal('+d.id+')"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="act-text"><b>'+d.company+'</b></div><div class="act-time">'+fmtEur(d.amount)+' · '+stageInfo(d.stage).name+'</div></div></div>'
+  ).join('') : '<div class="sd-empty">Geen deals gekoppeld.</div>';
+
+  showView('contact-detail');
+}
+function addContactNote(){
+  const input = document.getElementById('cdNoteInput');
+  if(!input.value.trim()) return;
+  const html = '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div><div class="act-text">'+input.value+'</div><div class="act-time">Zojuist toegevoegd</div></div></div>';
+  document.getElementById('cdTimeline').insertAdjacentHTML('afterbegin', html);
+  input.value='';
+}
+
+/* ================= DEALS LIST ================= */
+function renderDealsList(){
+  const q = (document.getElementById('dealsFilterInput').value||'').toLowerCase();
+  const sort = document.getElementById('dealsSort').value;
+  let list = deals.filter(d=>d.company.toLowerCase().includes(q));
+  if(sort==='amount-desc') list.sort((a,b)=>b.amount-a.amount);
+  if(sort==='amount-asc') list.sort((a,b)=>a.amount-b.amount);
+  if(sort==='close-asc') list.sort((a,b)=> new Date(a.close) - new Date(b.close));
+  const total = deals.reduce((s,d)=>s+d.amount,0);
+  document.getElementById('dealsCount').textContent = deals.length + ' deals · ' + fmtEur(total) + ' totale waarde';
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  dealsPage = Math.min(dealsPage, totalPages);
+  const pageItems = list.slice((dealsPage-1)*PAGE_SIZE, dealsPage*PAGE_SIZE);
+  document.getElementById('dealsListBody').innerHTML = pageItems.map(d=>{
+    const c = contacts.find(x=>x.id===d.contactId);
+    return '<tr onclick="openDeal('+d.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials+'</div><div><div class="deal-co">'+d.company+'</div><div class="deal-contact">'+c.name+'</div></div></div></td><td>'+stagePillHTML(d.stage)+'</td><td class="amount">'+fmtEur(d.amount)+'</td><td class="prob">'+d.prob+'%</td><td class="prob">'+d.close+'</td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:28px;">Geen deals gevonden.<br><button class="btn-secondary" style="margin-top:10px;" onclick=\"openFormModal(&#39;deal&#39;)\">+ Nieuwe deal toevoegen</button></td></tr>';
+  renderPaginationBar('dealsPagination', list.length, dealsPage, 'gotoDealsPage');
+}
+function gotoDealsPage(p){ dealsPage = p; renderDealsList(); }
+
+/* ================= KANBAN ================= */
+function renderKanban(){
+  const board = document.getElementById('kanbanBoard');
+  board.innerHTML = stages.map(s=>{
+    const inStage = deals.filter(d=>d.stage===s.id);
+    const total = inStage.reduce((sum,d)=>sum+d.amount,0);
+    return '<div class="kcol" data-stage="'+s.id+'" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event, \''+s.id+'\')">'+
+      '<div class="kcol-head"><span class="kcol-name">'+s.name+'</span><span class="pcol-count">'+inStage.length+'</span></div>'+
+      '<div class="kcol-total">'+fmtEur(total)+'</div>'+
+      inStage.map(d=>{
+        const c = contacts.find(x=>x.id===d.contactId);
+        return '<div class="kcard" id="kcard-'+d.id+'" draggable="true" ondragstart="onDragStart(event, '+d.id+')" ondragend="onDragEnd(event)" onclick="openDeal('+d.id+')">'+
+          '<div class="kname">'+d.company+'</div><div class="kamt">'+fmtEur(d.amount)+'</div>'+
+          '<div class="kcard-foot"><div class="kcard-avatar">'+c.initials+'</div><div class="kcard-date">'+d.close+'</div></div></div>';
+      }).join('') +
+      '</div>';
+  }).join('');
+}
+let dragDealId = null;
+function onDragStart(e, id){ dragDealId = id; e.dataTransfer.effectAllowed='move'; e.currentTarget.classList.add('dragging'); }
+function onDragEnd(e){ e.currentTarget.classList.remove('dragging'); }
+function onDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('dragover'); }
+function onDragLeave(e){ e.currentTarget.classList.remove('dragover'); }
+function onDrop(e, stageId){
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  const deal = deals.find(d=>d.id===dragDealId);
+  if(deal){
+    deal.stage = stageId;
+    renderKanban(); renderDealsList(); renderDashboard();
+    persistCollection('deals');
+    showToast(deal.company+' verplaatst naar '+stageInfo(stageId).name);
+    const landed = document.getElementById('kcard-'+deal.id);
+    if(landed){ landed.classList.add('landed'); setTimeout(()=>landed.classList.remove('landed'), 350); }
+  }
+}
+
+/* ================= DEAL DETAIL ================= */
+function ddCurrentEmail(){ const d = deals.find(x=>x.id===currentDealId); if(!d) return ''; const c = contacts.find(x=>x.id===d.contactId); return c ? c.email : ''; }
+function openDeal(id){
+  currentDealId = id;
+  const d = deals.find(x=>x.id===id);
+  const c = contacts.find(x=>x.id===d.contactId);
+  document.getElementById('ddLogo').textContent = c.initials;
+  document.getElementById('ddLogo').style.background = 'linear-gradient(135deg,'+c.color+','+c.color+')';
+  document.getElementById('ddName').textContent = d.company;
+  document.getElementById('ddMeta').textContent = fmtEur(d.amount) + ' · sluit ' + d.close;
+  document.getElementById('ddAmount').textContent = fmtEur(d.amount);
+  document.getElementById('ddProb').textContent = d.prob + '%';
+  document.getElementById('ddCreated').textContent = '3 jul 2026';
+  document.getElementById('ddOwner').textContent = '—';
+  document.getElementById('ddBron').textContent = 'Website';
+  document.getElementById('ddAiSummary').innerHTML = generateDealSummary(d, c);
+
+  const sel = document.getElementById('ddStageSelect');
+  sel.innerHTML = stages.map(s=>'<option value="'+s.id+'" '+(s.id===d.stage?'selected':'')+'>'+s.name+'</option>').join('');
+
+  document.getElementById('ddContactCard').innerHTML =
+    '<div class="deal-name" style="cursor:pointer; margin-bottom:12px;" onclick="openContact('+c.id+')"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials+'</div><div><div class="deal-co">'+c.name+'</div><div class="deal-contact">'+c.company+'</div></div></div>'+
+    '<div class="info-row" style="padding:0;"><span class="k">'+c.email+'</span></div>'+
+    '<div class="info-row" style="padding:6px 0 0;"><span class="k">'+c.phone+'</span></div>';
+
+  document.getElementById('ddTimeline').innerHTML =
+    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="act-text">Deal aangemaakt in fase <b>'+stageInfo(d.stage).name+'</b></div><div class="act-time">3 jul 2026</div></div></div>'+
+    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12H7l-3 3V4z"/></svg></div><div><div class="act-text">Laatste contactmoment met <b>'+c.name+'</b></div><div class="act-time">Recent</div></div></div>';
+
+  const relTasks = tasks.filter(t=>t.tag===d.company || t.tag===c.company).slice(0,3);
+  document.getElementById('ddTasks').innerHTML = relTasks.length ? relTasks.map(t=>
+    '<div class="task-item"><div class="task-check '+(t.done?'done':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div><div class="task-title">'+t.title+'</div></div>'
+  ).join('') : '<div class="sd-empty">Geen taken gekoppeld.</div>';
+
+  switchDealTab('overzicht');
+  showView('deal-detail');
+}
+function changeDealStage(){
+  const d = deals.find(x=>x.id===currentDealId);
+  d.stage = document.getElementById('ddStageSelect').value;
+  renderKanban(); renderDealsList(); renderDashboard();
+  persistCollection('deals');
+  const c = contacts.find(x=>x.id===d.contactId);
+  document.getElementById('ddAiSummary').innerHTML = generateDealSummary(d, c);
+  showToast('Fase bijgewerkt naar ' + stageInfo(d.stage).name);
+}
+function switchDealTab(tab){
+  document.querySelectorAll('#view-deal-detail .tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.getElementById('ddTabOverzicht').style.display = tab==='overzicht' ? 'flex' : 'none';
+  document.getElementById('ddTabActiviteit').style.display = tab==='activiteit' ? 'block' : 'none';
+  document.getElementById('ddTabBestanden').style.display = tab==='bestanden' ? 'block' : 'none';
+}
+function addDealNote(){
+  const input = document.getElementById('ddNoteInput');
+  if(!input.value.trim()) return;
+  const html = '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div><div class="act-text">'+input.value+'</div><div class="act-time">Zojuist toegevoegd</div></div></div>';
+  document.getElementById('ddTimeline').insertAdjacentHTML('afterbegin', html);
+  input.value='';
+}
+
+/* ================= TASKS ================= */
+function setTaskFilter(f){
+  taskFilter = f;
+  document.querySelectorAll('#view-tasks .filter-chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('chip-task-'+f).classList.add('active');
+  renderTasks();
+}
+function renderTasks(){
+  let list = tasks;
+  if(taskFilter==='open') list = tasks.filter(t=>!t.done);
+  if(taskFilter==='done') list = tasks.filter(t=>t.done);
+  const prioColor = {hoog:'var(--coral)', normaal:'var(--amber)', laag:'var(--muted-2)'};
+  document.getElementById('tasksBody').innerHTML = list.map(t=>
+    '<div class="task-item '+(t.done?'done':'')+'">'+
+      '<div class="task-check '+(t.done?'done':'')+'" onclick="toggleTask('+t.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>'+
+      '<span class="prio-dot" style="background:'+prioColor[t.prio]+';"></span>'+
+      '<div class="task-title">'+t.title+'</div>'+
+      '<span class="task-tag">'+t.tag+'</span>'+
+      '<div class="task-due">'+t.due+'</div>'+
+      '<button class="modal-close" style="width:22px; height:22px; flex-shrink:0;" onclick="deleteTask('+t.id+')" title="Verwijderen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'+
+    '</div>'
+  ).join('') || '<div class="sd-empty">Geen taken in deze weergave.</div>';
+  document.getElementById('tasksCount').textContent = tasks.filter(t=>!t.done).length + ' openstaande taken';
+  document.getElementById('navCountTasks').textContent = tasks.filter(t=>!t.done).length;
+}
+function toggleTask(id){
+  const t = tasks.find(x=>x.id===id);
+  t.done = !t.done;
+  renderTasks();
+  persistCollection('tasks');
+}
+function deleteTask(id){
+  tasks = tasks.filter(t=>t.id!==id);
+  renderTasks();
+  persistCollection('tasks');
+  showToast('Taak verwijderd');
+}
+function addTask(){
+  const input = document.getElementById('newTaskInput');
+  if(!input.value.trim()) return;
+  const prio = document.getElementById('newTaskPrio').value;
+  tasks.unshift({id:Date.now(), title:input.value, due:'—', prio:prio, done:false, tag:'Nieuw'});
+  input.value='';
+  renderTasks();
+  persistCollection('tasks');
+  showToast('Taak toegevoegd');
+}
+
+/* ================= CALENDAR ================= */
+const monthNames = ['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
+function changeMonth(dir){
+  calMonth += dir;
+  if(calMonth>11){calMonth=0; calYear++;}
+  if(calMonth<0){calMonth=11; calYear--;}
+  renderCalendar();
+}
+function renderCalendar(){
+  document.getElementById('calMonthLabel').textContent = monthNames[calMonth] + ' ' + calYear;
+  const grid = document.getElementById('calGrid');
+  const dows = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+  let html = dows.map(d=>'<div class="cal-dow">'+d+'</div>').join('');
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  let startOffset = (firstDay.getDay()+6)%7; // make Monday=0
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrevMonth = new Date(calYear, calMonth, 0).getDate();
+  const todayStr = new Date(2026,7,7).toDateString(); // "today" fixed to 7 aug 2026
+
+  let cells = [];
+  for(let i=startOffset; i>0; i--) cells.push({day: daysInPrevMonth-i+1, other:true});
+  for(let d=1; d<=daysInMonth; d++) cells.push({day:d, other:false});
+  while(cells.length % 7 !== 0) cells.push({day: cells.length, other:true});
+
+  cells.forEach(cell=>{
+    const dateObj = new Date(calYear, calMonth, cell.day);
+    const key = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(cell.day).padStart(2,'0');
+    const isToday = !cell.other && dateObj.toDateString()===todayStr;
+    const evts = (!cell.other && calEvents[key]) ? calEvents[key] : [];
+    html += '<div class="cal-cell '+(cell.other?'othermonth':'')+' '+(isToday?'today':'')+'">'+
+      '<div class="cal-daynum">'+cell.day+'</div>'+
+      evts.map(e=>'<div class="cal-evt '+(e.c||'')+'">'+e.t+'</div>').join('') +
+      '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+/* ================= REPORTS ================= */
+/* ================= CSV EXPORT ================= */
+function downloadCSV(filename, headers, rows){
+  const esc = v => { const s = (v===undefined||v===null?'':v).toString(); return /[",\n;]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+  const csv = [headers.map(esc).join(';')].concat(rows.map(r=>r.map(esc).join(';'))).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(filename+' gedownload');
+}
+function exportContactsCSV(){
+  downloadCSV('contacten.csv', ['Naam','Bedrijf','E-mail','Telefoon','Tag','Laatste contact'],
+    contacts.map(c=>[c.name,c.company,c.email,c.phone,c.tag,c.last]));
+}
+function exportDealsCSV(){
+  downloadCSV('deals.csv', ['Bedrijf','Contact','Fase','Waarde','Winkans %','Sluitdatum'],
+    deals.map(d=>{ const c = contacts.find(x=>x.id===d.contactId); return [d.company, c?c.name:'', stageInfo(d.stage).name, d.amount, d.prob, d.close]; }));
+}
+function exportInvoicesCSV(){
+  downloadCSV('facturen.csv', ['Factuurnr','Klant','Bedrag','Status','Vervaldatum'],
+    invoices.map(inv=>{ const c = contacts.find(x=>x.id===inv.contactId); const {total} = invoiceItemsTotal(inv); return [inv.number, c?c.company:'', Math.round(total), inv.status, inv.dueDate]; }));
+}
+function exportContractsCSV(){
+  downloadCSV('contracten.csv', ['Klant','Type','Jaarwaarde','Startdatum','Einddatum','Status'],
+    contracts.map(c=>[c.company, c.type, c.value, c.start, c.end, c.status]));
+}
+function exportReportsCSV(){
+  downloadCSV('prestatie-per-verkoper.csv', ['Naam','Deals gewonnen','Omzet','Win rate %'],
+    team.map(m=>[m.name, m.won, m.revenue, Math.round((m.won/16)*100)]));
+}
+function exportYearOverviewCSV(){
+  downloadCSV('jaaroverzicht-2026.csv', ['Kwartaal','Omzet','Lasten','Netto'],
+    [['Q1 2026',90000,28200,61800], ['Q2 2026',110000,29500,80500], ['Q3 2026 (t/m aug)',88000,20100,67900], ['Q4 2026','—','—','—']]);
+}
+
+function renderReports(){
+  document.getElementById('repTableBody').innerHTML = team.map(m=>{
+    const rate = Math.round((m.won/16)*100);
+    return '<tr><td><div class="deal-name"><div class="deal-logo" style="background:var(--accent-tint);color:var(--accent);">'+m.initials+'</div><div class="deal-co">'+m.name+'</div></div></td><td class="amount">'+m.won+'</td><td class="amount">'+m.revenue+'</td><td class="prob">'+rate+'%<span class="mini-bar"><span style="width:'+rate+'%;"></span></span></td></tr>';
+  }).join('') || '<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:24px;">Nog geen teamleden toegevoegd.</td></tr>';
+}
+
+/* ================= TEAM ================= */
+function renderTeam(){
+  document.getElementById('teamGrid').innerHTML = team.map(m=>
+    '<div class="team-card">'+
+      '<div class="team-top"><div class="team-avatar" style="background:'+m.color+';">'+m.initials+'</div><div><div class="team-name">'+m.name+'</div><div class="team-role">'+m.role+'</div></div></div>'+
+      '<div class="team-stats"><div class="team-stat"><div class="n">'+m.won+'</div><div class="l">Deals gewonnen</div></div><div class="team-stat"><div class="n">'+m.revenue+'</div><div class="l">Omzet</div></div></div>'+
+      '<div class="team-target"><span>Kwartaaldoel</span><span>'+m.target+'%</span></div>'+
+      '<div class="team-bar"><span style="width:'+m.target+'%;"></span></div>'+
+    '</div>'
+  ).join('') || '<div class="sd-empty" style="padding:30px;">Nog geen teamleden. Klik op "+ Teamlid uitnodigen" om te beginnen.</div>';
+}
+
+/* ================= SETTINGS ================= */
+function switchSettingsTab(tab){
+  document.querySelectorAll('.settings-nav button').forEach(b=>b.classList.toggle('active', b.dataset.stab===tab));
+  ['profiel','pipeline','handtekening','notificaties'].forEach(t=>{
+    document.getElementById('stab-'+t).style.display = (t===tab) ? 'block' : 'none';
+  });
+  if(tab==='pipeline') renderStageEditor();
+}
+function renderStageEditor(){
+  document.getElementById('stageEditList').innerHTML = stages.map((s,i)=>
+    '<div class="stage-edit-row"><span class="d" style="background:'+s.color+';"></span><input type="text" value="'+s.name+'" onchange="renameStage('+i+',this.value)"><button class="rm" onclick="removeStage('+i+')">✕</button></div>'
+  ).join('');
+}
+function renameStage(i, val){ stages[i].name = val; renderKanban(); renderDashboard(); renderDealsList(); persistCollection('stages'); }
+function removeStage(i){
+  if(stages.length<=2){ showToast('Je hebt minimaal 2 fases nodig'); return; }
+  const dealsInStage = deals.filter(d=>d.stage===stages[i].id).length;
+  const warning = dealsInStage>0
+    ? 'Fase "'+stages[i].name+'" verwijderen? Er staan nog '+dealsInStage+' deal(s) in — die blijven bestaan maar tonen straks een onbekende fase.'
+    : 'Fase "'+stages[i].name+'" verwijderen? Dit kan niet ongedaan worden gemaakt.';
+  if(!confirm(warning)) return;
+  stages.splice(i,1);
+  renderStageEditor(); renderKanban(); renderDashboard(); renderDealsList();
+  persistCollection('stages');
+  showToast('Fase verwijderd');
+}
+function addStage(){
+  const input = document.getElementById('newStageInput');
+  if(!input.value.trim()) return;
+  stages.splice(stages.length-1, 0, {id:'stage'+Date.now(), name:input.value, color:'var(--blue)'});
+  input.value='';
+  renderStageEditor(); renderKanban(); renderDashboard(); renderDealsList();
+  persistCollection('stages');
+}
+
+/* ================= GLOBAL SEARCH ================= */
+const searchInput = document.getElementById('globalSearchInput');
+const searchDropdown = document.getElementById('searchDropdown');
+searchInput.addEventListener('input', ()=>{
+  const q = searchInput.value.trim().toLowerCase();
+  if(!q){ searchDropdown.classList.remove('show'); return; }
+  const cMatches = contacts.filter(c=>c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q)).slice(0,4);
+  const dMatches = deals.filter(d=>d.company.toLowerCase().includes(q)).slice(0,4);
+  let html = '';
+  if(cMatches.length){
+    html += '<div class="sd-label">Contacten</div>' + cMatches.map(c=>
+      '<div class="sd-item" onclick="searchGo(()=>openContact('+c.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div><div><div class="sd-title">'+c.name+'</div><div class="sd-sub">'+c.company+'</div></div></div>'
+    ).join('');
+  }
+  if(dMatches.length){
+    html += '<div class="sd-label">Deals</div>' + dMatches.map(d=>
+      '<div class="sd-item" onclick="searchGo(()=>openDeal('+d.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="sd-title">'+d.company+'</div><div class="sd-sub">'+fmtEur(d.amount)+'</div></div></div>'
+    ).join('');
+  }
+  if(!cMatches.length && !dMatches.length) html = '<div class="sd-empty">Geen resultaten voor "'+searchInput.value+'"</div>';
+  searchDropdown.innerHTML = html;
+  searchDropdown.classList.add('show');
+});
+function searchGo(fn){ fn(); searchDropdown.classList.remove('show'); searchInput.value=''; }
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.search-wrap')) searchDropdown.classList.remove('show');
+});
+
+/* ================= COMMAND PALETTE ================= */
+const cmdkNavCommands = [
+  {title:'Ga naar Dashboard', sub:'Overzicht', group:'Navigatie', icon:'nav', action:()=>showView('dashboard')},
+  {title:'Ga naar Contacten', sub:'Alle contacten', group:'Navigatie', icon:'nav', action:()=>showView('contacts')},
+  {title:'Ga naar Deals', sub:'Dealoverzicht', group:'Navigatie', icon:'nav', action:()=>showView('deals')},
+  {title:'Ga naar Pipeline', sub:'Kanban-bord', group:'Navigatie', icon:'nav', action:()=>showView('pipeline')},
+  {title:'Ga naar Taken', sub:'Openstaande taken', group:'Navigatie', icon:'nav', action:()=>showView('tasks')},
+  {title:'Ga naar Kalender', sub:'Afspraken', group:'Navigatie', icon:'nav', action:()=>showView('calendar')},
+  {title:'Ga naar Rapporten', sub:'Prestaties', group:'Navigatie', icon:'nav', action:()=>showView('reports')},
+  {title:'Ga naar Facturen', sub:'Betaalstatus', group:'Navigatie', icon:'nav', action:()=>showView('invoices')},
+  {title:'Ga naar Contracten', sub:'Lopende contracten', group:'Navigatie', icon:'nav', action:()=>showView('contracts')},
+  {title:'Ga naar Maandelijkse lasten', sub:'Vaste kosten', group:'Navigatie', icon:'nav', action:()=>showView('expenses')},
+  {title:'Ga naar Jaaroverzicht', sub:'Boekjaar 2026', group:'Navigatie', icon:'nav', action:()=>showView('yearoverview')},
+  {title:'Ga naar Team', sub:'Teamleden', group:'Navigatie', icon:'nav', action:()=>showView('team')},
+  {title:'Ga naar Datacontrole', sub:'Datakwaliteit', group:'Navigatie', icon:'nav', action:()=>showView('datacheck')},
+  {title:'Ga naar Instellingen', sub:'Beheer je omgeving', group:'Navigatie', icon:'nav', action:()=>showView('settings')},
+  {title:'Nieuwe taak toevoegen', sub:'Snelle actie', group:'Acties', icon:'task', action:()=>{ showView('tasks'); setTimeout(()=>document.getElementById('newTaskInput').focus(),200); }},
+  {title:'Nieuwe deal aanmaken', sub:'Snelle actie', group:'Acties', icon:'deal', action:()=>openFormModal('deal')},
+  {title:'Nieuw contact toevoegen', sub:'Snelle actie', group:'Acties', icon:'contact', action:()=>openFormModal('contact')},
+  {title:'Nieuwe factuur opstellen', sub:'Snelle actie', group:'Acties', icon:'invoice', action:()=>openFormModal('invoice')},
+  {title:'Nieuw contract toevoegen', sub:'Snelle actie', group:'Acties', icon:'contract', action:()=>openFormModal('contract')},
+];
+const cmdkIcons = {
+  nav:'<path d="M9 18l6-6-6-6"/>',
+  contact:'<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>',
+  deal:'<path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/>',
+  invoice:'<path d="M7 3h10l2 2v16l-3-2-3 2-3-2-3 2V5z"/>',
+  contract:'<path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/>',
+  task:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.3 2.3L16 9"/>',
+};
+function buildCmdkIndex(){
+  const items = [...cmdkNavCommands];
+  contacts.forEach(c=> items.push({title:c.name, sub:c.company+' · '+c.tag, group:'Contacten', icon:'contact', action:()=>openContact(c.id)}));
+  deals.forEach(d=> items.push({title:d.company, sub:fmtEur(d.amount)+' · '+stageInfo(d.stage).name, group:'Deals', icon:'deal', action:()=>openDeal(d.id)}));
+  invoices.forEach(inv=>{ const c = contacts.find(x=>x.id===inv.contactId); items.push({title:inv.number, sub:c.company+' · '+inv.status, group:'Facturen', icon:'invoice', action:()=>openInvoice(inv.id)}); });
+  contracts.forEach(c=> items.push({title:c.company, sub:c.type+' · '+c.status, group:'Contracten', icon:'contract', action:()=>openContract(c.id)}));
+  tasks.filter(t=>!t.done).forEach(t=> items.push({title:t.title, sub:t.tag+' · '+t.due, group:'Taken', icon:'task', action:()=>showView('tasks')}));
+  return items;
+}
+let cmdkSelected = 0;
+let cmdkCurrentResults = [];
+function openCmdk(e){
+  if(e) e.stopPropagation();
+  document.getElementById('cmdkOverlay').classList.add('show');
+  const input = document.getElementById('cmdkInput');
+  input.value = '';
+  input.focus();
+  renderCmdkResults('');
+}
+function closeCmdk(){
+  document.getElementById('cmdkOverlay').classList.remove('show');
+}
+function renderCmdkResults(query){
+  const q = query.trim().toLowerCase();
+  let results;
+  if(!q){
+    results = cmdkNavCommands.slice(0, 8);
+  } else {
+    const all = buildCmdkIndex();
+    results = all.map(item=>{
+      const t = item.title.toLowerCase(), s = (item.sub||'').toLowerCase();
+      let score = 0;
+      if(t.startsWith(q)) score = 100;
+      else if(t.includes(q)) score = 60;
+      else if(s.includes(q)) score = 35;
+      return {item, score};
+    }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,8).map(x=>x.item);
+  }
+  cmdkCurrentResults = results;
+  cmdkSelected = 0;
+  const resultsEl = document.getElementById('cmdkResults');
+  if(!results.length){
+    resultsEl.innerHTML = '<div class="cmdk-empty">Geen resultaten voor "'+query+'"</div>';
+    return;
+  }
+  let lastGroup = null;
+  let html = '';
+  results.forEach((item, i)=>{
+    if(item.group !== lastGroup){ html += '<div class="cmdk-group-label">'+item.group+'</div>'; lastGroup = item.group; }
+    html += '<div class="cmdk-item '+(i===0?'selected':'')+'" data-idx="'+i+'" onclick="execCmdkItem('+i+')" onmouseenter="cmdkHover('+i+')">'+
+      '<div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+cmdkIcons[item.icon]+'</svg></div>'+
+      '<div><div class="ci-title">'+item.title+'</div><div class="ci-sub">'+(item.sub||'')+'</div></div>'+
+      '<div class="ci-enter">↵</div>'+
+    '</div>';
+  });
+  resultsEl.innerHTML = html;
+}
+function cmdkHover(i){
+  cmdkSelected = i;
+  document.querySelectorAll('.cmdk-item').forEach(el=>el.classList.remove('selected'));
+  const el = document.querySelector('.cmdk-item[data-idx="'+i+'"]');
+  if(el) el.classList.add('selected');
+}
+function execCmdkItem(i){
+  const item = cmdkCurrentResults[i];
+  if(!item) return;
+  closeCmdk();
+  item.action();
+}
+document.getElementById('cmdkInput').addEventListener('input', (e)=> renderCmdkResults(e.target.value));
+document.addEventListener('keydown', (e)=>{
+  const meta = e.metaKey || e.ctrlKey;
+  if(meta && e.key.toLowerCase()==='k'){
+    e.preventDefault();
+    const overlay = document.getElementById('cmdkOverlay');
+    overlay.classList.contains('show') ? closeCmdk() : openCmdk();
+    return;
+  }
+  const overlay = document.getElementById('cmdkOverlay');
+  if(!overlay.classList.contains('show')) return;
+  if(e.key==='Escape'){ closeCmdk(); return; }
+  if(e.key==='ArrowDown'){ e.preventDefault(); cmdkSelected = Math.min(cmdkCurrentResults.length-1, cmdkSelected+1); cmdkHover(cmdkSelected); scrollCmdkIntoView(); }
+  if(e.key==='ArrowUp'){ e.preventDefault(); cmdkSelected = Math.max(0, cmdkSelected-1); cmdkHover(cmdkSelected); scrollCmdkIntoView(); }
+  if(e.key==='Enter'){ e.preventDefault(); execCmdkItem(cmdkSelected); }
+});
+function scrollCmdkIntoView(){
+  const el = document.querySelector('.cmdk-item[data-idx="'+cmdkSelected+'"]');
+  if(el) el.scrollIntoView({block:'nearest'});
+}
+
+/* ================= FORM MODALS (create/edit contact / deal / invoice / contract) ================= */
+function closeFormModal(){ document.getElementById('formOverlay').classList.remove('show'); }
+function escAttr(s){ return (s===undefined||s===null?'':s).toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function contactOptionsHTML(selectedId){
+  return contacts.map(c=>'<option value="'+c.id+'" '+(selectedId===c.id?'selected':'')+'>'+escAttr(c.name)+' — '+escAttr(c.company)+'</option>').join('');
+}
+function clearFieldError(el){ el.closest('.field-row').classList.remove('field-error'); }
+function setFieldError(el, msg){ const row = el.closest('.field-row'); row.classList.add('field-error'); const m = row.querySelector('.field-error-msg'); if(m) m.textContent = msg; }
+function validateField(el, msg){
+  if(!el.value || !el.value.toString().trim()){ setFieldError(el, msg || 'Dit veld is verplicht'); return false; }
+  clearFieldError(el);
+  return true;
+}
+function computeInitials(name){ return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+function openFormModal(type, editId){
+  const builders = { contact:buildContactForm, deal:buildDealForm, invoice:buildInvoiceForm, contract:buildContractForm };
+  const builder = builders[type];
+  if(!builder) return;
+  document.getElementById('formBox').innerHTML = builder(editId || null);
+  document.getElementById('formOverlay').classList.add('show');
+  const firstInput = document.querySelector('#formBox input, #formBox select');
+  if(firstInput) setTimeout(()=>firstInput.focus(), 50);
+}
+
+/* ---- Contact ---- */
+function buildContactForm(editId){
+  const rec = editId ? contacts.find(c=>c.id===editId) : null;
+  return '<div class="modal-head"><div class="modal-title">'+(rec?'Contact bewerken':'Nieuw contact')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
+  '<div class="modal-body">'+
+    '<div class="field-row"><label>Naam <span class="req">*</span></label><input type="text" id="ncName" value="'+escAttr(rec?rec.name:'')+'"><div class="field-error-msg">Vul een naam in</div></div>'+
+    '<div class="field-row"><label>Bedrijf <span class="req">*</span></label><input type="text" id="ncCompany" value="'+escAttr(rec?rec.company:'')+'"><div class="field-error-msg">Vul een bedrijfsnaam in</div></div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>E-mail <span class="req">*</span></label><input type="email" id="ncEmail" value="'+escAttr(rec?rec.email:'')+'"><div class="field-error-msg">Vul een geldig e-mailadres in</div></div>'+
+      '<div><label>Telefoon</label><input type="text" id="ncPhone" value="'+escAttr(rec&&rec.phone!=='—'?rec.phone:'')+'" placeholder="06-12345678"></div>'+
+    '</div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Rol / functie</label><input type="text" id="ncRole" value="'+escAttr(rec&&rec.role!=='—'?rec.role:'')+'" placeholder="bv. Inkoper"></div>'+
+      '<div><label>Tag</label><select id="ncTag"><option '+(rec&&rec.tag==='Lead'?'selected':'')+'>Lead</option><option '+(rec&&rec.tag==='Prospect'?'selected':'')+'>Prospect</option><option '+(rec&&rec.tag==='Klant'?'selected':'')+'>Klant</option></select></div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteContact('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitContactForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Contact toevoegen')+'</button></div>';
+}
+function submitContactForm(editId){
+  const name = document.getElementById('ncName');
+  const company = document.getElementById('ncCompany');
+  const email = document.getElementById('ncEmail');
+  let ok = validateField(name, 'Vul een naam in');
+  ok = validateField(company, 'Vul een bedrijfsnaam in') && ok;
+  const emailOk = validateField(email, 'Vul een e-mailadres in') && /\S+@\S+\.\S+/.test(email.value);
+  if(!emailOk) setFieldError(email, 'Vul een geldig e-mailadres in');
+  ok = emailOk && ok;
+  if(!ok) return;
+
+  const phone = document.getElementById('ncPhone').value.trim() || '—';
+  const role = document.getElementById('ncRole').value.trim() || '—';
+  const tag = document.getElementById('ncTag').value;
+
+  if(editId){
+    const rec = contacts.find(c=>c.id===editId);
+    rec.name = name.value.trim(); rec.company = company.value.trim(); rec.email = email.value.trim();
+    rec.phone = phone; rec.role = role; rec.tag = tag; rec.initials = computeInitials(rec.name);
+    closeFormModal(); renderContacts(); persistCollection('contacts');
+    showToast('Contact bijgewerkt');
+    openContact(editId);
+    return;
+  }
+  const palette = [
+    {bg:'#2A4A3B', text:'#8FE3B3'}, {bg:'#2E3D5A', text:'#9DB4EA'}, {bg:'#3D2A3F', text:'#D9A9E0'}
+  ];
+  const p = palette[contacts.length % palette.length];
+  const newContact = {
+    id: Date.now(), name:name.value.trim(), company:company.value.trim(), email:email.value.trim(),
+    phone:phone, tag:tag, last:'Nog geen contact', initials:computeInitials(name.value),
+    color:p.bg, text:p.text, role:role, since:'aug 2026'
+  };
+  contacts.push(newContact);
+  closeFormModal();
+  renderContacts();
+  document.getElementById('navCountContacts').textContent = contacts.length;
+  persistCollection('contacts');
+  showToast('Contact "'+newContact.name+'" toegevoegd');
+  openContact(newContact.id);
+}
+function deleteContact(id){
+  const rec = contacts.find(c=>c.id===id);
+  if(!rec) return;
+  const linkedDeals = deals.filter(d=>d.contactId===id).length;
+  const msg = linkedDeals>0
+    ? 'Contact "'+rec.name+'" verwijderen? Er zijn nog '+linkedDeals+' gekoppelde deal(s) — die blijven bestaan maar tonen straks geen contactgegevens meer.'
+    : 'Contact "'+rec.name+'" verwijderen? Dit kan niet ongedaan worden gemaakt.';
+  if(!confirm(msg)) return;
+  contacts.splice(contacts.findIndex(c=>c.id===id), 1);
+  closeFormModal();
+  renderContacts();
+  document.getElementById('navCountContacts').textContent = contacts.length;
+  persistCollection('contacts');
+  showToast('Contact verwijderd');
+  showView('contacts');
+}
+
+/* ---- Deal ---- */
+function buildDealForm(editId){
+  const rec = editId ? deals.find(d=>d.id===editId) : null;
+  return '<div class="modal-head"><div class="modal-title">'+(rec?'Deal bewerken':'Nieuwe deal')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
+  '<div class="modal-body">'+
+    '<div class="field-row"><label>Naam deal <span class="req">*</span></label><input type="text" id="ndName" value="'+escAttr(rec?rec.company:'')+'" placeholder="bv. Orbit Logistics — uitbreiding"><div class="field-error-msg">Vul een naam in</div></div>'+
+    '<div class="field-row"><label>Contact <span class="req">*</span></label><select id="ndContact">'+contactOptionsHTML(rec?rec.contactId:null)+'</select></div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Waarde (€) <span class="req">*</span></label><input type="text" id="ndAmount" value="'+(rec?rec.amount:'')+'" placeholder="bv. 8500"><div class="field-error-msg">Vul een geldig bedrag in</div></div>'+
+      '<div><label>Fase</label><select id="ndStage">'+stages.map(s=>'<option value="'+s.id+'" '+(rec&&rec.stage===s.id?'selected':'')+'>'+escAttr(s.name)+'</option>').join('')+'</select></div>'+
+    '</div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Winkans (%)</label><input type="text" id="ndProb" value="'+(rec?rec.prob:'')+'" placeholder="bv. 40"></div>'+
+      '<div><label>Verwachte sluitdatum</label><input type="date" id="ndClose"></div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteDeal('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitDealForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Deal toevoegen')+'</button></div>';
+}
+function submitDealForm(editId){
+  const name = document.getElementById('ndName');
+  const amountEl = document.getElementById('ndAmount');
+  let ok = validateField(name, 'Vul een naam in');
+  const amountNum = parseFloat(amountEl.value.replace(/[^\d.,]/g,'').replace(',','.'));
+  if(!amountEl.value.trim() || isNaN(amountNum) || amountNum<=0){ setFieldError(amountEl, 'Vul een geldig bedrag in'); ok = false; } else clearFieldError(amountEl);
+  if(!ok) return;
+
+  const contactId = parseInt(document.getElementById('ndContact').value);
+  const closeDateRaw = document.getElementById('ndClose').value;
+  const closeLabel = closeDateRaw ? new Date(closeDateRaw).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'}) : (editId ? deals.find(d=>d.id===editId).close : 'nog niet bepaald');
+  const prob = parseInt(document.getElementById('ndProb').value) || 20;
+  const stage = document.getElementById('ndStage').value;
+
+  if(editId){
+    const rec = deals.find(d=>d.id===editId);
+    rec.company = name.value.trim(); rec.contactId = contactId; rec.amount = Math.round(amountNum);
+    rec.stage = stage; rec.prob = prob; rec.close = closeLabel;
+    closeFormModal(); renderDealsList(); renderKanban(); renderDashboard(); persistCollection('deals');
+    showToast('Deal bijgewerkt');
+    openDeal(editId);
+    return;
+  }
+  const newDeal = { id:Date.now(), company:name.value.trim(), contactId:contactId, stage:stage, amount:Math.round(amountNum), prob:prob, close:closeLabel };
+  deals.push(newDeal);
+  closeFormModal();
+  renderDealsList(); renderKanban(); renderDashboard();
+  document.getElementById('navCountDeals').textContent = deals.length;
+  persistCollection('deals');
+  showToast('Deal "'+newDeal.company+'" toegevoegd');
+  openDeal(newDeal.id);
+}
+function deleteDeal(id){
+  const rec = deals.find(d=>d.id===id);
+  if(!rec) return;
+  if(!confirm('Deal "'+rec.company+'" verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  deals.splice(deals.findIndex(d=>d.id===id), 1);
+  closeFormModal();
+  renderDealsList(); renderKanban(); renderDashboard();
+  document.getElementById('navCountDeals').textContent = deals.length;
+  persistCollection('deals');
+  showToast('Deal verwijderd');
+  showView('pipeline');
+}
+
+/* ---- Invoice ---- */
+function buildInvoiceForm(editId){
+  const rec = editId ? invoices.find(i=>i.id===editId) : null;
+  const firstItem = rec ? rec.items[0] : null;
+  return '<div class="modal-head"><div class="modal-title">'+(rec?'Factuur bewerken':'Nieuwe factuur')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
+  '<div class="modal-body">'+
+    '<div class="field-row"><label>Klant <span class="req">*</span></label><select id="niContact">'+contactOptionsHTML(rec?rec.contactId:null)+'</select></div>'+
+    '<div class="field-row"><label>Omschrijving <span class="req">*</span></label><input type="text" id="niDesc" value="'+escAttr(firstItem?firstItem.desc:'')+'" placeholder="bv. Implementatie NextCRM Pro"><div class="field-error-msg">Vul een omschrijving in</div></div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Bedrag excl. BTW (€) <span class="req">*</span></label><input type="text" id="niAmount" value="'+(firstItem?firstItem.price:'')+'" placeholder="bv. 4500"><div class="field-error-msg">Vul een geldig bedrag in</div></div>'+
+      '<div><label>Vervaldatum</label><input type="date" id="niDue"></div>'+
+    '</div>'+
+    (rec?'<div class="field-row"><label>Status</label><select id="niStatus"><option value="open" '+(rec.status==='open'?'selected':'')+'>Open</option><option value="betaald" '+(rec.status==='betaald'?'selected':'')+'>Betaald</option><option value="te laat" '+(rec.status==='te laat'?'selected':'')+'>Te laat</option></select></div>':'')+
+  '</div>'+
+  '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteInvoice('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitInvoiceForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Factuur aanmaken')+'</button></div>';
+}
+function submitInvoiceForm(editId){
+  const desc = document.getElementById('niDesc');
+  const amountEl = document.getElementById('niAmount');
+  let ok = validateField(desc, 'Vul een omschrijving in');
+  const amountNum = parseFloat(amountEl.value.replace(/[^\d.,]/g,'').replace(',','.'));
+  if(!amountEl.value.trim() || isNaN(amountNum) || amountNum<=0){ setFieldError(amountEl, 'Vul een geldig bedrag in'); ok = false; } else clearFieldError(amountEl);
+  if(!ok) return;
+
+  const contactId = parseInt(document.getElementById('niContact').value);
+  const dueRaw = document.getElementById('niDue').value;
+  const dueDateObj = dueRaw ? new Date(dueRaw) : null;
+
+  if(editId){
+    const rec = invoices.find(i=>i.id===editId);
+    rec.contactId = contactId; rec.items = [{desc:desc.value.trim(), qty:1, price:Math.round(amountNum)}];
+    if(dueDateObj) rec.dueDate = dueDateObj.toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'});
+    const statusEl = document.getElementById('niStatus');
+    if(statusEl) rec.status = statusEl.value;
+    closeFormModal(); renderInvoices(); persistCollection('invoices');
+    showToast('Factuur bijgewerkt');
+    openInvoice(editId);
+    return;
+  }
+  const today = new Date(2026,7,7);
+  const finalDue = dueDateObj || new Date(today.getTime() + 14*86400000);
+  const num = 'FAC-2026-0' + (25 + invoices.length);
+  const newInvoice = {
+    id:Date.now(), number:num, contactId:contactId, dealId:null, status:'open',
+    issueDate: today.toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'}),
+    dueDate: finalDue.toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'}),
+    items:[{desc:desc.value.trim(), qty:1, price:Math.round(amountNum)}]
+  };
+  invoices.push(newInvoice);
+  closeFormModal();
+  renderInvoices();
+  persistCollection('invoices');
+  showToast('Factuur '+newInvoice.number+' aangemaakt');
+  openInvoice(newInvoice.id);
+}
+function deleteInvoice(id){
+  const rec = invoices.find(i=>i.id===id);
+  if(!rec) return;
+  if(!confirm('Factuur '+rec.number+' verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  invoices.splice(invoices.findIndex(i=>i.id===id), 1);
+  closeFormModal();
+  renderInvoices();
+  persistCollection('invoices');
+  showToast('Factuur verwijderd');
+  showView('invoices');
+}
+
+/* ---- Contract ---- */
+function buildContractForm(editId){
+  const rec = editId ? contracts.find(c=>c.id===editId) : null;
+  return '<div class="modal-head"><div class="modal-title">'+(rec?'Contract bewerken':'Nieuw contract')+'</div><button class="modal-close" onclick="closeFormModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
+  '<div class="modal-body">'+
+    '<div class="field-row"><label>Klant <span class="req">*</span></label><select id="ncoContact">'+contactOptionsHTML(rec?rec.contactId:null)+'</select></div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Type</label><select id="ncoType"><option '+(rec&&rec.type==='Jaarabonnement'?'selected':'')+'>Jaarabonnement</option><option '+(rec&&rec.type==='Maandabonnement'?'selected':'')+'>Maandabonnement</option><option '+(rec&&rec.type==='Projectcontract'?'selected':'')+'>Projectcontract</option></select></div>'+
+      '<div><label>Jaarwaarde (€) <span class="req">*</span></label><input type="text" id="ncoValue" value="'+(rec?rec.value:'')+'" placeholder="bv. 12000"><div class="field-error-msg">Vul een geldig bedrag in</div></div>'+
+    '</div>'+
+    '<div class="field-row two-col">'+
+      '<div><label>Startdatum</label><input type="date" id="ncoStart"></div>'+
+      '<div><label>Einddatum</label><input type="date" id="ncoEnd"></div>'+
+    '</div>'+
+    (rec?'<div class="field-row"><label>Status</label><select id="ncoStatus"><option value="actief" '+(rec.status==='actief'?'selected':'')+'>Actief</option><option value="verloopt binnenkort" '+(rec.status==='verloopt binnenkort'?'selected':'')+'>Verloopt binnenkort</option><option value="verlopen" '+(rec.status==='verlopen'?'selected':'')+'>Verlopen</option></select></div>':'')+
+    '<div class="field-row"><label style="display:flex; align-items:center; gap:8px; font-weight:600;"><input type="checkbox" id="ncoRenew" style="width:auto;" '+(rec&&rec.autoRenew?'checked':'')+'> Automatische verlenging</label></div>'+
+  '</div>'+
+  '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteContract('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitContractForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Contract toevoegen')+'</button></div>';
+}
+function submitContractForm(editId){
+  const valueEl = document.getElementById('ncoValue');
+  const valueNum = parseFloat(valueEl.value.replace(/[^\d.,]/g,'').replace(',','.'));
+  if(!valueEl.value.trim() || isNaN(valueNum) || valueNum<=0){ setFieldError(valueEl, 'Vul een geldig bedrag in'); return; }
+  clearFieldError(valueEl);
+
+  const contactId = parseInt(document.getElementById('ncoContact').value);
+  const contact = contacts.find(c=>c.id===contactId);
+  const startRaw = document.getElementById('ncoStart').value;
+  const endRaw = document.getElementById('ncoEnd').value;
+  const fmtDate = (raw, fallback)=> raw ? new Date(raw).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'}) : fallback;
+  const type = document.getElementById('ncoType').value;
+  const autoRenew = document.getElementById('ncoRenew').checked;
+
+  if(editId){
+    const rec = contracts.find(c=>c.id===editId);
+    rec.contactId = contactId; rec.company = contact.company; rec.type = type; rec.value = Math.round(valueNum);
+    if(startRaw) rec.start = fmtDate(startRaw, rec.start);
+    if(endRaw) rec.end = fmtDate(endRaw, rec.end);
+    rec.autoRenew = autoRenew;
+    const statusEl = document.getElementById('ncoStatus');
+    if(statusEl) rec.status = statusEl.value;
+    closeFormModal(); renderContracts(); persistCollection('contracts');
+    showToast('Contract bijgewerkt');
+    openContract(editId);
+    return;
+  }
+  const newContract = {
+    id:Date.now(), contactId:contactId, company:contact.company, type:type,
+    value:Math.round(valueNum), start:fmtDate(startRaw,'7 aug 2026'), end:fmtDate(endRaw,'7 aug 2027'),
+    status:'actief', autoRenew:autoRenew
+  };
+  contracts.push(newContract);
+  closeFormModal();
+  renderContracts();
+  persistCollection('contracts');
+  showToast('Contract met '+newContract.company+' toegevoegd');
+  openContract(newContract.id);
+}
+function deleteContract(id){
+  const rec = contracts.find(c=>c.id===id);
+  if(!rec) return;
+  if(!confirm('Contract met '+rec.company+' verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  contracts.splice(contracts.findIndex(c=>c.id===id), 1);
+  closeFormModal();
+  renderContracts();
+  persistCollection('contracts');
+  showToast('Contract verwijderd');
+  showView('contracts');
+}
+
+/* ================= AI DEAL SUMMARY ================= */
+function generateDealSummary(d, c){
+  const stageMsgs = {
+    contact: 'Nog vroeg in het traject bij <b>'+c.company+'</b> — kans op winnen is nu '+d.prob+'%. Plan een vervolgcontact om de behoefte te kwalificeren voordat je een voorstel stuurt.',
+    voorstel: 'Voorstel is verstuurd naar <b>'+c.company+'</b>, kans op winnen '+d.prob+'%. Is er binnen enkele dagen geen reactie, dan is een korte follow-up verstandig.',
+    onderhandeling: 'Deze deal zit in de laatste fase bij <b>'+c.company+'</b> — kans op winnen '+d.prob+'%. Sluitdatum staat op '+d.close+', houd de voortgang deze week goed in de gaten.',
+    gewonnen: 'Deze deal is gewonnen — mooi werk! Overweeg een vervolgvoorstel of upsell bij <b>'+c.company+'</b> nu de relatie warm is.',
+    verloren: 'Deze deal is als verloren gemarkeerd. Geen directe actie nodig, tenzij er signalen zijn van nieuwe interesse bij <b>'+c.company+'</b>.',
+  };
+  return stageMsgs[d.stage] || ('Status van deze deal bij <b>'+c.company+'</b> is op dit moment onduidelijk.');
+}
+
+/* ================= NOTIFICATIONS ================= */
+function toggleNotif(e){
+  e.stopPropagation();
+  document.getElementById('notifDropdown').classList.toggle('show');
+}
+function markAllRead(e){
+  e.stopPropagation();
+  document.getElementById('notifDot').style.display = 'none';
+  document.querySelectorAll('#notifList .activity-item').forEach(el=> el.style.opacity = '.5');
+  showToast('Alle meldingen gemarkeerd als gelezen');
+}
+function toggleProfileMenu(e){
+  e.stopPropagation();
+  document.getElementById('profileMenu').classList.toggle('show');
+}
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('#profileRow')) document.getElementById('profileMenu').classList.remove('show');
+});
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('#notifBtn')) document.getElementById('notifDropdown').classList.remove('show');
+});
+
+/* ================= INVOICES ================= */
+let invoiceFilter = 'all';
+function invStatusColor(s){ return s==='betaald' ? 'var(--accent)' : s==='te laat' ? 'var(--coral)' : 'var(--amber)'; }
+function invStatusPillHTML(s){
+  const c = invStatusColor(s);
+  const label = s==='te laat' ? 'Te laat' : (s.charAt(0).toUpperCase()+s.slice(1));
+  return '<span class="stage-pill" style="background:color-mix(in srgb, '+c+' 15%, white); color:'+c+';"><span class="d" style="background:'+c+';"></span>'+label+'</span>';
+}
+function invoiceItemsTotal(inv){
+  const subtotal = inv.items.reduce((s,it)=>s+it.qty*it.price,0);
+  const vat = subtotal*0.21;
+  return {subtotal, vat, total: subtotal+vat};
+}
+function setInvoiceFilter(f){
+  invoiceFilter = f;
+  invoicesPage = 1;
+  document.querySelectorAll('#view-invoices .filter-chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('chip-inv-'+(f==='all'?'all':f==='te laat'?'telaat':f)).classList.add('active');
+  renderInvoices();
+}
+function renderInvoices(){
+  const q = (document.getElementById('invoicesFilterInput').value||'').toLowerCase();
+  let list = invoices.filter(inv=>{
+    const c = contacts.find(x=>x.id===inv.contactId);
+    const matchQ = inv.number.toLowerCase().includes(q) || c.company.toLowerCase().includes(q);
+    const matchF = invoiceFilter==='all' || inv.status===invoiceFilter;
+    return matchQ && matchF;
+  });
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  invoicesPage = Math.min(invoicesPage, totalPages);
+  const pageItems = list.slice((invoicesPage-1)*PAGE_SIZE, invoicesPage*PAGE_SIZE);
+  document.getElementById('invoicesBody').innerHTML = pageItems.map(inv=>{
+    const c = contacts.find(x=>x.id===inv.contactId);
+    const {total} = invoiceItemsTotal(inv);
+    return '<tr onclick="openInvoice('+inv.id+')"><td class="deal-co">'+inv.number+'</td><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials+'</div><div class="deal-co">'+c.company+'</div></div></td><td class="amount">'+fmtEur(Math.round(total))+'</td><td>'+invStatusPillHTML(inv.status)+'</td><td class="prob">'+inv.dueDate+'</td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:28px;">Geen facturen gevonden.<br><button class="btn-secondary" style="margin-top:10px;" onclick=\"openFormModal(&#39;invoice&#39;)\">+ Nieuwe factuur aanmaken</button></td></tr>';
+  renderPaginationBar('invoicesPagination', list.length, invoicesPage, 'gotoInvoicesPage');
+
+  let totalAll=0, openSum=0, openCount=0, lateSum=0, lateCount=0, paidSum=0;
+  invoices.forEach(inv=>{
+    const {total} = invoiceItemsTotal(inv);
+    totalAll += total;
+    if(inv.status==='open'){ openSum+=total; openCount++; }
+    if(inv.status==='te laat'){ openSum+=total; openCount++; lateSum+=total; lateCount++; }
+    if(inv.status==='betaald') paidSum += total;
+  });
+  document.getElementById('invStatTotal').textContent = fmtEur(Math.round(totalAll));
+  document.getElementById('invStatOpen').textContent = fmtEur(Math.round(openSum));
+  document.getElementById('invStatOpenCount').textContent = openCount;
+  document.getElementById('invStatLate').textContent = fmtEur(Math.round(lateSum));
+  document.getElementById('invStatLateCount').textContent = lateCount;
+  document.getElementById('invStatPaid').textContent = fmtEur(Math.round(paidSum));
+  document.getElementById('invoicesSub').textContent = invoices.length + ' facturen · ' + fmtEur(Math.round(totalAll)) + ' totaal';
+  document.getElementById('navCountInvoicesOpen').textContent = openCount;
+}
+function gotoInvoicesPage(p){ invoicesPage = p; renderInvoices(); }
+function openInvoice(id){
+  currentInvoiceId = id;
+  const inv = invoices.find(x=>x.id===id);
+  const c = contacts.find(x=>x.id===inv.contactId);
+  const {subtotal, vat, total} = invoiceItemsTotal(inv);
+  document.getElementById('invLogo').textContent = c.initials;
+  document.getElementById('invLogo').style.background = 'linear-gradient(135deg,'+c.color+','+c.color+')';
+  document.getElementById('invName').textContent = inv.number;
+  document.getElementById('invMeta').textContent = c.company + ' · ' + fmtEur(Math.round(total));
+  document.getElementById('invStatusPill').innerHTML = invStatusPillHTML(inv.status);
+  document.getElementById('invItemsBody').innerHTML = inv.items.map(it=>'<tr><td>'+it.desc+'</td><td class="prob">'+it.qty+'</td><td class="prob">'+fmtEur(it.price)+'</td><td class="amount">'+fmtEur(it.qty*it.price)+'</td></tr>').join('');
+  document.getElementById('invSubtotal').textContent = fmtEur(Math.round(subtotal));
+  document.getElementById('invVat').textContent = fmtEur(Math.round(vat));
+  document.getElementById('invTotal').textContent = fmtEur(Math.round(total));
+  document.getElementById('invClient').textContent = c.company;
+  document.getElementById('invIssueDate').textContent = inv.issueDate;
+  document.getElementById('invDueDate').textContent = inv.dueDate;
+  const deal = deals.find(d=>d.id===inv.dealId);
+  document.getElementById('invDealLink').textContent = deal ? deal.company : '—';
+  document.getElementById('invMarkPaidBtn').style.display = inv.status==='betaald' ? 'none' : 'inline-block';
+
+  const steps = [
+    {label:'Factuur verzonden', date: inv.issueDate, done:true},
+    {label:'Vervaldatum', date: inv.dueDate, done: inv.status!=='open'},
+    {label: inv.status==='te laat' ? 'Nog niet betaald — over datum' : (inv.status==='betaald' ? 'Betaling ontvangen' : 'Wacht op betaling'), date:'', done: inv.status==='betaald'},
+  ];
+  document.getElementById('invTimeline').innerHTML = steps.map(s=>
+    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+(s.done?'<path d="M5 13l4 4L19 7"/>':'<circle cx="12" cy="12" r="9"/>')+'</svg></div><div><div class="act-text">'+s.label+'</div><div class="act-time">'+s.date+'</div></div></div>'
+  ).join('');
+  showView('invoice-detail');
+}
+function markInvoicePaid(){
+  const inv = invoices.find(x=>x.id===currentInvoiceId);
+  inv.status = 'betaald';
+  openInvoice(inv.id);
+  renderInvoices();
+  persistCollection('invoices');
+  showToast('Factuur '+inv.number+' gemarkeerd als betaald');
+}
+function printInvoice(){
+  const inv = invoices.find(x=>x.id===currentInvoiceId);
+  if(!inv) return;
+  const c = contacts.find(x=>x.id===inv.contactId);
+  const {subtotal, vat, total} = invoiceItemsTotal(inv);
+  const rowsHtml = inv.items.map(it=>'<tr><td>'+it.desc+'</td><td style="text-align:right;">'+it.qty+'</td><td style="text-align:right;">'+fmtEur(it.price)+'</td><td style="text-align:right;">'+fmtEur(it.qty*it.price)+'</td></tr>').join('');
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+inv.number+'</title>'+
+    '<style>body{font-family:Arial,sans-serif; color:#16211B; padding:40px; max-width:640px; margin:0 auto;}'+
+    'h1{font-size:20px; margin-bottom:2px;} .muted{color:#5C6960; font-size:13px;} table{width:100%; border-collapse:collapse; margin-top:24px;}'+
+    'th{text-align:left; font-size:11px; text-transform:uppercase; color:#5C6960; border-bottom:1px solid #E3E8E1; padding:8px 4px;}'+
+    'td{padding:8px 4px; border-bottom:1px solid #ECF0E9; font-size:13.5px;} .totals{margin-top:10px; width:100%;}'+
+    '.totals td{border:none; padding:4px;} .totals .grand{font-weight:700; font-size:15px; border-top:1px solid #16211B; padding-top:8px;}'+
+    '</style></head><body>'+
+    '<h1>Factuur '+inv.number+'</h1><div class="muted">Nextlayer B.V. — NextCRM</div>'+
+    '<div style="display:flex; justify-content:space-between; margin-top:24px;">'+
+      '<div><div class="muted">Aan</div><div>'+c.company+'</div><div class="muted">'+c.email+'</div></div>'+
+      '<div style="text-align:right;"><div class="muted">Factuurdatum</div><div>'+inv.issueDate+'</div><div class="muted" style="margin-top:6px;">Vervaldatum</div><div>'+inv.dueDate+'</div></div>'+
+    '</div>'+
+    '<table><thead><tr><th>Omschrijving</th><th style="text-align:right;">Aantal</th><th style="text-align:right;">Prijs</th><th style="text-align:right;">Totaal</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
+    '<table class="totals"><tr><td></td><td style="text-align:right;">Subtotaal</td><td style="text-align:right; width:110px;">'+fmtEur(Math.round(subtotal))+'</td></tr>'+
+    '<tr><td></td><td style="text-align:right;">BTW (21%)</td><td style="text-align:right;">'+fmtEur(Math.round(vat))+'</td></tr>'+
+    '<tr class="grand"><td></td><td style="text-align:right;">Totaal</td><td style="text-align:right;">'+fmtEur(Math.round(total))+'</td></tr></table>'+
+    '<script>window.onload=()=>window.print();</'+'script></body></html>';
+  const w = window.open('', '_blank');
+  if(!w){ showToast('Sta pop-ups toe om de PDF te openen'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+/* ================= CONTRACTS ================= */
+let contractFilter = 'all';
+function conStatusColor(s){ return s==='actief' ? 'var(--accent)' : s==='verlopen' ? 'var(--coral)' : 'var(--amber)'; }
+function conStatusPillHTML(s){
+  const c = conStatusColor(s);
+  const label = s.charAt(0).toUpperCase()+s.slice(1);
+  return '<span class="stage-pill" style="background:color-mix(in srgb, '+c+' 15%, white); color:'+c+';"><span class="d" style="background:'+c+';"></span>'+label+'</span>';
+}
+function setContractFilter(f){
+  contractFilter = f;
+  contractsPage = 1;
+  document.querySelectorAll('#view-contracts .filter-chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('chip-con-'+(f==='all'?'all':f==='verloopt binnenkort'?'verloopt':f)).classList.add('active');
+  renderContracts();
+}
+function renderContracts(){
+  let list = contracts.filter(c=> contractFilter==='all' || c.status===contractFilter);
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  contractsPage = Math.min(contractsPage, totalPages);
+  const pageItems = list.slice((contractsPage-1)*PAGE_SIZE, contractsPage*PAGE_SIZE);
+  document.getElementById('contractsBody').innerHTML = pageItems.map(c=>{
+    const contact = contacts.find(x=>x.id===c.contactId);
+    return '<tr onclick="openContract('+c.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+contact.color+';color:'+contact.text+';">'+contact.initials+'</div><div class="deal-co">'+c.company+'</div></div></td><td class="prob">'+c.type+'</td><td class="amount">'+fmtEur(c.value)+'</td><td class="prob">'+c.start+'</td><td class="prob">'+c.end+'</td><td>'+conStatusPillHTML(c.status)+'</td></tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:28px;">Geen contracten gevonden.<br><button class="btn-secondary" style="margin-top:10px;" onclick=\"openFormModal(&#39;contract&#39;)\">+ Nieuw contract toevoegen</button></td></tr>';
+  renderPaginationBar('contractsPagination', list.length, contractsPage, 'gotoContractsPage');
+
+  const active = contracts.filter(c=>c.status==='actief').length;
+  const totalValue = contracts.filter(c=>c.status!=='verlopen').reduce((s,c)=>s+c.value,0);
+  const expiring = contracts.filter(c=>c.status==='verloopt binnenkort').length;
+  document.getElementById('conStatActive').textContent = active;
+  document.getElementById('conStatTotalCount').textContent = contracts.length;
+  document.getElementById('conStatValue').textContent = fmtEur(totalValue);
+  document.getElementById('conStatExpiring').textContent = expiring;
+  document.getElementById('conStatDuration').textContent = '14';
+  document.getElementById('contractsSub').textContent = contracts.length + ' contracten · ' + fmtEur(totalValue) + ' actieve waarde';
+}
+function gotoContractsPage(p){ contractsPage = p; renderContracts(); }
+function openContract(id){
+  currentContractId = id;
+  const c = contracts.find(x=>x.id===id);
+  const contact = contacts.find(x=>x.id===c.contactId);
+  document.getElementById('conLogo').textContent = contact.initials;
+  document.getElementById('conLogo').style.background = 'linear-gradient(135deg,'+contact.color+','+contact.color+')';
+  document.getElementById('conName').textContent = c.company;
+  document.getElementById('conMeta').textContent = c.type + ' · ' + fmtEur(c.value) + '/jaar';
+  document.getElementById('conStatusPill').innerHTML = conStatusPillHTML(c.status);
+  document.getElementById('conType').textContent = c.type;
+  document.getElementById('conValue').textContent = fmtEur(c.value);
+  document.getElementById('conStart').textContent = c.start;
+  document.getElementById('conEnd').textContent = c.end;
+  document.getElementById('conAutoRenew').textContent = c.autoRenew ? 'Ja' : 'Nee';
+
+  document.getElementById('conContactCard').innerHTML =
+    '<div class="deal-name" style="cursor:pointer; margin-bottom:12px;" onclick="openContact('+contact.id+')"><div class="deal-logo" style="background:'+contact.color+';color:'+contact.text+';">'+contact.initials+'</div><div><div class="deal-co">'+contact.name+'</div><div class="deal-contact">'+contact.company+'</div></div></div>'+
+    '<div class="info-row" style="padding:0;"><span class="k">'+contact.email+'</span></div>'+
+    '<div class="info-row" style="padding:6px 0 0;"><span class="k">'+contact.phone+'</span></div>';
+
+  const relInv = invoices.filter(inv=>inv.contactId===c.contactId);
+  document.getElementById('conInvoices').innerHTML = relInv.length ? relInv.map(inv=>{
+    const {total} = invoiceItemsTotal(inv);
+    return '<div class="activity-item" style="cursor:pointer;" onclick="openInvoice('+inv.id+')"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h10l2 2v16l-3-2-3 2-3-2-3 2V5z"/></svg></div><div><div class="act-text"><b>'+inv.number+'</b></div><div class="act-time">'+fmtEur(Math.round(total))+' · '+inv.status+'</div></div></div>';
+  }).join('') : '<div class="sd-empty">Geen facturen gekoppeld.</div>';
+
+  showView('contract-detail');
+}
+function printContract(){
+  const c = contracts.find(x=>x.id===currentContractId);
+  if(!c) return;
+  const contact = contacts.find(x=>x.id===c.contactId);
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contract — '+c.company+'</title>'+
+    '<style>body{font-family:Arial,sans-serif; color:#16211B; padding:40px; max-width:640px; margin:0 auto;}'+
+    'h1{font-size:20px; margin-bottom:2px;} .muted{color:#5C6960; font-size:13px;} table{width:100%; border-collapse:collapse; margin-top:24px;}'+
+    'td{padding:9px 4px; border-bottom:1px solid #ECF0E9; font-size:13.5px;} td.k{color:#5C6960; width:220px;} td.v{font-weight:600;}'+
+    '</style></head><body>'+
+    '<h1>Contract — '+c.company+'</h1><div class="muted">Nextlayer B.V. — NextCRM</div>'+
+    '<table>'+
+      '<tr><td class="k">Klant</td><td class="v">'+contact.name+' ('+contact.email+')</td></tr>'+
+      '<tr><td class="k">Type</td><td class="v">'+c.type+'</td></tr>'+
+      '<tr><td class="k">Jaarwaarde</td><td class="v">'+fmtEur(c.value)+'</td></tr>'+
+      '<tr><td class="k">Startdatum</td><td class="v">'+c.start+'</td></tr>'+
+      '<tr><td class="k">Einddatum</td><td class="v">'+c.end+'</td></tr>'+
+      '<tr><td class="k">Automatische verlenging</td><td class="v">'+(c.autoRenew?'Ja':'Nee')+'</td></tr>'+
+      '<tr><td class="k">Status</td><td class="v">'+c.status+'</td></tr>'+
+    '</table>'+
+    '<script>window.onload=()=>window.print();</'+'script></body></html>';
+  const w = window.open('', '_blank');
+  if(!w){ showToast('Sta pop-ups toe om de PDF te openen'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+/* ================= EXPENSES ================= */
+function renderExpenses(){
+  document.getElementById('expensesBody').innerHTML = expenses.map(e=>
+    '<div class="expense-row"><div class="expense-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg></div>'+
+    '<div style="flex:1;"><div class="expense-name">'+e.name+'</div><div class="expense-cat">'+e.category+'</div></div>'+
+    '<div class="expense-amt">'+fmtEur(e.amount)+'</div>'+
+    '<div class="expense-next">'+(e.active ? e.next : 'Gepauzeerd')+'</div>'+
+    '<div class="switch '+(e.active?'on':'')+'" onclick="toggleExpense('+e.id+')"></div>'+
+    '<button class="modal-close" style="width:22px; height:22px; flex-shrink:0; margin-left:4px;" onclick="deleteExpense('+e.id+')" title="Verwijderen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'+
+    '</div>'
+  ).join('') || '<div class="sd-empty" style="padding:24px;">Geen kostenposten. Voeg er hieronder een toe.</div>';
+
+  const activeList = expenses.filter(e=>e.active);
+  const monthly = activeList.reduce((s,e)=>s+e.amount,0);
+  document.getElementById('expStatMonthly').textContent = fmtEur(monthly);
+  document.getElementById('expStatCount').textContent = activeList.length;
+  document.getElementById('expStatYearly').textContent = fmtEur(monthly*12);
+  const biggest = activeList.slice().sort((a,b)=>b.amount-a.amount)[0];
+  document.getElementById('expStatBiggest').textContent = biggest ? biggest.name : '—';
+  document.getElementById('expStatBiggestAmt').textContent = biggest ? fmtEur(biggest.amount)+' / maand' : '—';
+  document.getElementById('expStatPaused').textContent = expenses.filter(e=>!e.active).length;
+  document.getElementById('expSub').textContent = fmtEur(monthly) + ' per maand · ' + fmtEur(monthly*12) + ' per jaar';
+}
+function toggleExpense(id){
+  const e = expenses.find(x=>x.id===id);
+  e.active = !e.active;
+  renderExpenses();
+  persistCollection('expenses');
+}
+function deleteExpense(id){
+  const e = expenses.find(x=>x.id===id);
+  if(!e) return;
+  if(!confirm('Kostenpost "'+e.name+'" verwijderen?')) return;
+  expenses = expenses.filter(x=>x.id!==id);
+  renderExpenses();
+  persistCollection('expenses');
+  showToast('Kostenpost verwijderd');
+}
+function addExpense(){
+  const name = document.getElementById('newExpName').value;
+  const cat = document.getElementById('newExpCat').value;
+  const amtRaw = document.getElementById('newExpAmt').value.replace(/[^\d.,]/g,'').replace(',','.');
+  const amt = parseFloat(amtRaw);
+  if(!name.trim() || !amt){ showToast('Vul een naam en bedrag in'); return; }
+  expenses.push({id:Date.now(), name:name, category:cat, amount:amt, next:'volgende maand', active:true});
+  document.getElementById('newExpName').value='';
+  document.getElementById('newExpAmt').value='';
+  renderExpenses();
+  persistCollection('expenses');
+  showToast('Kostenpost toegevoegd');
+}
+
+/* ================= YEAR OVERVIEW ================= */
+function renderYearOverview(){
+  const monthNamesShort = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug'];
+  const monthly = monthNamesShort.map(m=>({m, rev:0}));
+  const maxVal = Math.max(1, ...monthly.map(x=>x.rev));
+  document.getElementById('yoChart').innerHTML = monthly.map(x=>
+    '<div class="bar-col"><div class="bar-track"><div class="bar-fill dim" style="height:'+Math.max(2, Math.round(x.rev/maxVal*100))+'%;"></div></div><div class="bar-pct">€'+Math.round(x.rev/1000)+'k</div><div class="bar-label">'+x.m+'</div></div>'
+  ).join('');
+
+  const totalRev = invoices.filter(i=>i.status==='betaald').reduce((s,i)=>s+invoiceItemsTotal(i).total,0);
+  const activeExpAll = expenses.filter(e=>e.active);
+  const totalCost = activeExpAll.reduce((s,e)=>s+e.amount,0) * 8; // grove schatting over de weergegeven periode
+  const net = totalRev - totalCost;
+  document.getElementById('yoRevenue').textContent = fmtEur(Math.round(totalRev));
+  document.getElementById('yoCosts').textContent = fmtEur(Math.round(totalCost));
+  document.getElementById('yoNet').textContent = fmtEur(Math.round(net));
+  document.getElementById('yoRevenueGrowth').textContent = '—';
+  document.getElementById('yoWonDeals').textContent = deals.filter(d=>d.stage==='gewonnen').length;
+
+  const quarters = [
+    {q:'Q1 2026', rev:0, cost:0},
+    {q:'Q2 2026', rev:0, cost:0},
+    {q:'Q3 2026 (t/m aug)', rev:0, cost:0},
+    {q:'Q4 2026', rev:0, cost:0},
+  ];
+  document.getElementById('yoQuarterBody').innerHTML = quarters.map(q=>
+    '<tr><td class="deal-co">'+q.q+'</td><td class="amount">—</td><td class="amount">—</td><td class="amount" style="color:var(--accent);">—</td></tr>'
+  ).join('');
+
+  document.getElementById('yoNewContacts').textContent = contacts.length + ' (dit boekjaar)';
+  const avgDeal = deals.length ? Math.round(deals.reduce((s,d)=>s+d.amount,0)/deals.length) : 0;
+  document.getElementById('yoAvgDeal').textContent = deals.length ? fmtEur(avgDeal) : '—';
+  document.getElementById('yoActiveContracts').textContent = contracts.filter(c=>c.status!=='verlopen').length;
+  const avgExp = activeExpAll.length ? Math.round(activeExpAll.reduce((s,e)=>s+e.amount,0)/activeExpAll.length) : 0;
+  document.getElementById('yoAvgExpense').textContent = activeExpAll.length ? fmtEur(avgExp) : '—';
+}
+
+/* ================= DATA CHECK ================= */
+function renderDataCheck(){
+  const sevColor = {hoog:'var(--coral)', gemiddeld:'var(--amber)', laag:'var(--muted-2)'};
+  document.getElementById('issuesBody').innerHTML = issues.length ? issues.map(is=>
+    '<div class="issue-item"><span class="sev-pill" style="background:color-mix(in srgb, '+sevColor[is.sev]+' 15%, white); color:'+sevColor[is.sev]+';">'+is.sev+'</span>'+
+    '<div style="flex:1;"><div class="issue-title">'+is.title+'</div><div class="issue-desc">'+is.desc+'</div></div>'+
+    '<div class="issue-actions"><button class="btn-ghost" onclick="resolveIssue('+is.id+')">Oplossen</button><button class="btn-ghost" onclick="dismissIssue('+is.id+')">Negeer</button></div>'+
+    '</div>'
+  ).join('') : '<div class="sd-empty" style="padding:30px;">Geen aandachtspunten gevonden — je data is up-to-date.</div>';
+
+  const high = issues.filter(i=>i.sev==='hoog').length;
+  const med = issues.filter(i=>i.sev==='gemiddeld').length;
+  const low = issues.filter(i=>i.sev==='laag').length;
+  document.getElementById('sevHighCount').textContent = high;
+  document.getElementById('sevMedCount').textContent = med;
+  document.getElementById('sevLowCount').textContent = low;
+  const totalRecords = contacts.length + deals.length + invoices.length + contracts.length;
+  const score = Math.max(40, 100 - (high*8 + med*4 + low*1));
+  document.getElementById('healthScore').textContent = score + '%';
+  const healthRingEl = document.getElementById('healthRing');
+  healthRingEl.dataset.pct = score;
+  animateRing(healthRingEl, score);
+  document.getElementById('checkedSummary').textContent = totalRecords + ' records gecontroleerd';
+  document.getElementById('navCountDatacheck').textContent = issues.length;
+}
+function resolveIssue(id){ issues = issues.filter(i=>i.id!==id); renderDataCheck(); showToast('Aandachtspunt opgelost'); }
+function dismissIssue(id){ issues = issues.filter(i=>i.id!==id); renderDataCheck(); showToast('Aandachtspunt genegeerd'); }
+
+/* ================= PERSISTENCE (window.storage, with graceful fallback) ================= */
+const STORAGE_AVAILABLE = typeof window.storage !== 'undefined' && typeof window.storage.set === 'function';
+function collectionRef(key){
+  return {contacts, deals, invoices, contracts, tasks, expenses, stages}[key];
+}
+async function persistCollection(key){
+  if(!STORAGE_AVAILABLE) return;
+  const data = collectionRef(key);
+  if(!data) return;
+  try{
+    await window.storage.set('nextcrm:'+key, JSON.stringify(data), false);
+  } catch(err){
+    console.error('NextCRM: opslaan mislukt voor', key, err);
+  }
+}
+async function loadCollection(key){
+  const target = collectionRef(key);
+  if(!STORAGE_AVAILABLE || !target) return;
+  try{
+    const res = await window.storage.get('nextcrm:'+key, false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      if(Array.isArray(parsed) && parsed.length){
+        target.length = 0;
+        parsed.forEach(item => target.push(item));
+      }
+    }
+  } catch(err){
+    // key not found yet (first run) — keep the built-in demo data
+  }
+}
+async function loadAllCollections(){
+  if(!STORAGE_AVAILABLE) return;
+  await Promise.all(['contacts','deals','invoices','contracts','tasks','expenses','stages'].map(loadCollection));
+}
+
+/* ================= INIT ================= */
+async function initAll(){
+  await loadAllCollections();
+  renderDashboard();
+  renderContacts();
+  renderDealsList();
+  renderKanban();
+  renderTasks();
+  renderCalendar();
+  renderReports();
+  renderTeam();
+  renderInvoices();
+  renderContracts();
+  renderExpenses();
+  renderYearOverview();
+  renderDataCheck();
+  document.getElementById('navCountContacts').textContent = contacts.length;
+  document.getElementById('navCountDeals').textContent = deals.length;
+  runEntranceAnimations(document.getElementById('view-dashboard'), 'dashboard');
+}
+initAll();
+</script>
+</body>
+</html>
