@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
     --bg:#FAFBF8;
@@ -502,10 +503,62 @@
     .team-grid{ grid-template-columns:repeat(2,1fr); }
     .settings-layout{ grid-template-columns:1fr; }
   }
+
+  /* ---------- AUTH SCREEN ---------- */
+  .auth-screen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .auth-box{ width:400px; max-width:100%; background:var(--panel); border:1px solid var(--border); border-radius:16px; box-shadow:0 24px 60px rgba(15,25,20,.1); padding:30px 28px; }
+  .auth-tabs{ display:flex; background:var(--panel-2); border:1px solid var(--border); border-radius:9px; padding:3px; gap:2px; margin-bottom:22px; }
+  .auth-tabs button{ flex:1; border:none; background:none; padding:9px; border-radius:7px; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; }
+  .auth-tabs button.active{ background:var(--panel); color:var(--accent); box-shadow:0 1px 2px rgba(20,40,30,.08); }
+  .auth-form{ display:none; }
+  .auth-form.active{ display:block; }
+  .auth-error{ background:rgba(184,92,66,.1); border:1px solid rgba(184,92,66,.3); color:var(--coral); font-size:12.5px; padding:10px 12px; border-radius:9px; margin-bottom:14px; display:none; }
+  .auth-error.show{ display:block; }
+  .auth-hint{ background:var(--accent-tint); border:1px solid rgba(31,77,58,.18); color:var(--accent); font-size:12.5px; padding:10px 12px; border-radius:9px; margin-bottom:14px; display:none; }
+  .auth-hint.show{ display:block; }
+  .auth-submit{ width:100%; margin-top:4px; }
+  .auth-switch{ text-align:center; font-size:12.5px; color:var(--muted); margin-top:16px; }
+  .auth-switch a{ color:var(--accent); font-weight:700; cursor:pointer; }
+  .auth-loading{ display:flex; align-items:center; justify-content:center; min-height:100vh; color:var(--muted); font-size:13.5px; }
 </style>
 </head>
 <body>
-<div class="app">
+
+<div id="authLoading" class="auth-loading">NextCRM laden…</div>
+
+<div id="authScreen" class="auth-screen" style="display:none;">
+  <div class="auth-box">
+    <div class="brand" style="padding:0 0 22px; justify-content:center;">
+      <div class="brand-mark"><span></span><span></span><span></span></div>
+      <div class="brand-name">Next<em>CRM</em></div>
+    </div>
+    <div class="auth-tabs">
+      <button id="authTabLogin" class="active" onclick="switchAuthTab('login')">Inloggen</button>
+      <button id="authTabSignup" onclick="switchAuthTab('signup')">Account aanmaken</button>
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-hint" id="authHint"></div>
+
+    <form id="loginForm" class="auth-form active" onsubmit="return handleLogin(event)">
+      <div class="field-row"><label>E-mailadres</label><input type="email" id="loginEmail" required autocomplete="username"></div>
+      <div class="field-row"><label>Wachtwoord</label><input type="password" id="loginPassword" required autocomplete="current-password"></div>
+      <button type="submit" class="btn-primary auth-submit" id="loginSubmitBtn">Inloggen</button>
+    </form>
+
+    <form id="signupForm" class="auth-form" onsubmit="return handleSignup(event)">
+      <div class="field-row"><label>Volledige naam</label><input type="text" id="signupName" required autocomplete="name"></div>
+      <div class="field-row"><label>E-mailadres</label><input type="email" id="signupEmail" required autocomplete="username"></div>
+      <div class="field-row"><label>Wachtwoord</label><input type="password" id="signupPassword" required minlength="8" autocomplete="new-password"></div>
+      <div class="field-row" id="signupOrgRow"><label>Bedrijfsnaam</label><input type="text" id="signupOrgName" placeholder="bv. Nextlayer B.V."></div>
+      <button type="submit" class="btn-primary auth-submit" id="signupSubmitBtn">Account aanmaken</button>
+    </form>
+
+    <div class="auth-switch" id="authSwitchLogin" style="display:none;">Nog geen account? <a onclick="switchAuthTab('signup')">Account aanmaken</a></div>
+    <div class="auth-switch" id="authSwitchSignup">Al een account? <a onclick="switchAuthTab('login')">Inloggen</a></div>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -588,14 +641,14 @@
         <button class="btn-mini">Upgraden</button>
       </div>
       <div class="user-row" id="profileRow" onclick="toggleProfileMenu(event)" style="cursor:pointer; position:relative;">
-        <div class="avatar">NL</div>
+        <div class="avatar" id="profileAvatar">NL</div>
         <div>
-          <div class="who">Nextlayer B.V.</div>
-          <div class="role">Team-omgeving</div>
+          <div class="who" id="profileOrgName">—</div>
+          <div class="role" id="profileUserName">—</div>
         </div>
         <div class="notif-dropdown" id="profileMenu" style="left:0; right:auto; bottom:calc(100% + 8px); top:auto; width:100%;">
           <div class="cmdk-item" onclick="showView('settings'); event.stopPropagation();"><div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 000-2l2-1.5-2-3.4-2.4.6a8 8 0 00-1.7-1L14.8 3h-4l-.5 2.7a8 8 0 00-1.7 1l-2.4-.6-2 3.4L5.6 11a7.9 7.9 0 000 2l-2 1.5 2 3.4 2.4-.6a8 8 0 001.7 1l.5 2.7h4l.5-2.7a8 8 0 001.7-1l2.4.6 2-3.4-2-1.5z"/></svg></div><div><div class="ci-title">Profiel &amp; instellingen</div></div></div>
-          <div class="cmdk-item" onclick="showToast('Uitgelogd (demo)'); event.stopPropagation();"><div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></div><div><div class="ci-title">Uitloggen</div></div></div>
+          <div class="cmdk-item" onclick="handleLogout(); event.stopPropagation();"><div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></div><div><div class="ci-title">Uitloggen</div></div></div>
         </div>
       </div>
     </div>
@@ -948,7 +1001,7 @@
     <section id="view-team" class="view">
       <div class="page-head">
         <div><div class="page-title">Team</div><div class="page-sub">5 teamleden</div></div>
-        <button class="btn-primary">+ Teamlid uitnodigen</button>
+        <button class="btn-primary" onclick="inviteTeammate()">+ Teamlid uitnodigen</button>
       </div>
       <div class="team-grid" id="teamGrid"></div>
     </section>
@@ -965,11 +1018,11 @@
         </div>
         <div class="panel">
           <div class="settings-panel" id="stab-profiel">
-            <div class="form-row"><label>Bedrijfsnaam</label><input type="text" value="Nextlayer B.V."></div>
+            <div class="form-row"><label>Bedrijfsnaam</label><input type="text" id="orgNameInput" value=""></div>
             <div class="form-row"><label>E-mailadres</label><input type="email" value="" placeholder="jouw@nextlayer.nl"></div>
             <div class="form-row"><label>Website</label><input type="text" value="" placeholder="www.nextlayer.nl"></div>
             <div class="form-row"><label>Tijdzone</label><select><option>Europe/Amsterdam (UTC+2)</option><option>Europe/London (UTC+1)</option></select></div>
-            <button class="btn-primary" onclick="showToast('Bedrijfsprofiel opgeslagen')">Opslaan</button>
+            <button class="btn-primary" onclick="saveOrgProfile()">Opslaan</button>
           </div>
           <div class="settings-panel" id="stab-pipeline" style="display:none;">
             <div id="stageEditList"></div>
@@ -1269,13 +1322,7 @@ Nextlayer B.V.
 
 <script>
 /* ================= DATA ================= */
-let stages = [
-  {id:'contact', name:'Eerste contact', color:'var(--muted-2)'},
-  {id:'voorstel', name:'Voorstel', color:'var(--amber)'},
-  {id:'onderhandeling', name:'Onderhandeling', color:'var(--accent)'},
-  {id:'gewonnen', name:'Gewonnen', color:'var(--accent)'},
-  {id:'verloren', name:'Verloren', color:'var(--coral)'},
-];
+let stages = [];
 
 const contacts = [
 ];
@@ -1336,7 +1383,7 @@ const primaryActions = {
   tasks: {label:'+ Nieuwe taak', fn:()=>document.getElementById('newTaskInput').focus()},
   calendar: {label:'+ Afspraak', fn:()=>showToast('Afspraken plannen volgt binnenkort')},
   reports: {label:'Exporteren', fn:()=>exportReportsCSV()},
-  team: {label:'+ Teamlid uitnodigen', fn:()=>showToast('Uitnodiging volgt binnenkort')},
+  team: {label:'+ Teamlid uitnodigen', fn:()=>inviteTeammate()},
   settings: {label:'Opslaan', fn:()=>showToast('Instellingen opgeslagen')},
   invoices: {label:'+ Nieuwe factuur', fn:()=>openFormModal('invoice')},
   'invoice-detail': {label:'⬇ PDF downloaden', fn:()=>showToast('Factuur gedownload als PDF')},
@@ -1453,15 +1500,15 @@ function stagePillHTML(stageId){
 function renderDashboard(){
   const top = deals.filter(d=>d.stage!=='verloren').sort((a,b)=>b.amount-a.amount).slice(0,5);
   document.getElementById('dashDealsBody').innerHTML = top.map(d=>{
-    const c = contacts.find(x=>x.id===d.contactId);
-    return '<tr onclick="openDeal('+d.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials.slice(0,2)+'</div><div><div class="deal-co">'+d.company+'</div><div class="deal-contact">'+c.name+'</div></div></div></td><td>'+stagePillHTML(d.stage)+'</td><td class="amount">'+fmtEur(d.amount)+'</td><td class="prob">'+d.prob+'%</td><td class="prob">'+d.close+'</td></tr>';
+    const c = contacts.find(x=>x.id===d.contactId) || {color:'#8B9690', text:'#fff', initials:'—', name:'—'};
+    return '<tr onclick="openDeal('+d.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+esc(c.initials.slice(0,2))+'</div><div><div class="deal-co">'+esc(d.company)+'</div><div class="deal-contact">'+esc(c.name)+'</div></div></div></td><td>'+stagePillHTML(d.stage)+'</td><td class="amount">'+fmtEur(d.amount)+'</td><td class="prob">'+d.prob+'%</td><td class="prob">'+d.close+'</td></tr>';
   }).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:24px;">Nog geen deals. <a href="#" onclick="openFormModal(\'deal\'); return false;" style="color:var(--accent); font-weight:600;">Voeg er een toe</a></td></tr>';
 
   const cols = stages.filter(s=>s.id!=='verloren');
   document.getElementById('dashPipelineCols').innerHTML = cols.map(s=>{
     const inStage = deals.filter(d=>d.stage===s.id);
     const top2 = inStage.slice(0,2);
-    return '<div><div class="pcol-head"><span class="pcol-name">'+s.name+'</span><span class="pcol-count">'+inStage.length+'</span></div><div class="pcol-bar" style="background:'+s.color+';"></div>'+(top2.length?top2.map(d=>'<div class="pcard"><div class="pname">'+d.company+'</div><div class="pamt">'+fmtEur(d.amount)+'</div></div>').join(''):'<div style="font-size:11.5px; color:var(--muted-2); padding:4px 2px;">Leeg</div>')+'</div>';
+    return '<div><div class="pcol-head"><span class="pcol-name">'+esc(s.name)+'</span><span class="pcol-count">'+inStage.length+'</span></div><div class="pcol-bar" style="background:'+s.color+';"></div>'+(top2.length?top2.map(d=>'<div class="pcard"><div class="pname">'+esc(d.company)+'</div><div class="pamt">'+fmtEur(d.amount)+'</div></div>').join(''):'<div style="font-size:11.5px; color:var(--muted-2); padding:4px 2px;">Leeg</div>')+'</div>';
   }).join('');
 }
 
@@ -1481,7 +1528,7 @@ function renderContacts(){
   contactsPage = Math.min(contactsPage, totalPages);
   const pageItems = list.slice((contactsPage-1)*PAGE_SIZE, contactsPage*PAGE_SIZE);
   document.getElementById('contactsBody').innerHTML = pageItems.map(c=>
-    '<tr onclick="openContact('+c.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials+'</div><div class="deal-co">'+c.name+'</div></div></td><td>'+c.company+'</td><td class="prob">'+c.email+'</td><td><span class="tag">'+c.tag+'</span></td><td class="prob">'+c.last+'</td></tr>'
+    '<tr onclick="openContact('+c.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+esc(c.initials)+'</div><div class="deal-co">'+esc(c.name)+'</div></div></td><td>'+esc(c.company)+'</td><td class="prob">'+esc(c.email)+'</td><td><span class="tag">'+esc(c.tag)+'</span></td><td class="prob">'+esc(c.last)+'</td></tr>'
   ).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:28px;">Geen contacten gevonden.<br><button class="btn-secondary" style="margin-top:10px;" onclick=\"openFormModal(&#39;contact&#39;)\">+ Nieuw contact toevoegen</button></td></tr>';
   renderPaginationBar('contactsPagination', list.length, contactsPage, 'gotoContactsPage');
 }
@@ -1489,7 +1536,7 @@ function gotoContactsPage(p){ contactsPage = p; renderContacts(); }
 
 function cdCurrentEmail(){ const c = contacts.find(x=>x.id===currentContactId); return c ? c.email : ''; }
 function cdCurrentPhone(){ const c = contacts.find(x=>x.id===currentContactId); return c ? c.phone.replace(/[^\d+]/g,'') : ''; }
-function openContact(id){
+async function openContact(id){
   currentContactId = id;
   const c = contacts.find(x=>x.id===id);
   document.getElementById('cdAvatar').textContent = c.initials;
@@ -1497,28 +1544,32 @@ function openContact(id){
   document.getElementById('cdName').textContent = c.name;
   document.getElementById('cdMeta').textContent = c.role + ' bij ' + c.company;
   document.getElementById('cdInfo').innerHTML =
-    '<div class="info-row"><span class="k">Bedrijf</span><span class="v">'+c.company+'</span></div>'+
-    '<div class="info-row"><span class="k">E-mail</span><span class="v">'+c.email+'</span></div>'+
-    '<div class="info-row"><span class="k">Telefoon</span><span class="v">'+c.phone+'</span></div>'+
-    '<div class="info-row"><span class="k">Tag</span><span class="v"><span class="tag">'+c.tag+'</span></span></div>'+
-    '<div class="info-row"><span class="k">Klant sinds</span><span class="v">'+c.since+'</span></div>';
+    '<div class="info-row"><span class="k">Bedrijf</span><span class="v">'+esc(c.company)+'</span></div>'+
+    '<div class="info-row"><span class="k">E-mail</span><span class="v">'+esc(c.email)+'</span></div>'+
+    '<div class="info-row"><span class="k">Telefoon</span><span class="v">'+esc(c.phone)+'</span></div>'+
+    '<div class="info-row"><span class="k">Tag</span><span class="v"><span class="tag">'+esc(c.tag)+'</span></span></div>'+
+    '<div class="info-row"><span class="k">Klant sinds</span><span class="v">'+esc(c.since)+'</span></div>';
 
-  document.getElementById('cdTimeline').innerHTML =
-    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12H7l-3 3V4z"/></svg></div><div><div class="act-text">Laatste e-mail contact op <b>'+c.last+'</b></div><div class="act-time">Automatisch gelogd</div></div></div>'+
-    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div><div><div class="act-text">Contact toegevoegd aan NextCRM</div><div class="act-time">'+c.since+'</div></div></div>';
+  document.getElementById('cdTimeline').innerHTML = '<div class="sd-empty">Laden…</div>';
 
   const cDeals = deals.filter(d=>d.contactId===id);
   document.getElementById('cdDeals').innerHTML = cDeals.length ? cDeals.map(d=>
-    '<div class="activity-item" style="cursor:pointer;" onclick="openDeal('+d.id+')"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="act-text"><b>'+d.company+'</b></div><div class="act-time">'+fmtEur(d.amount)+' · '+stageInfo(d.stage).name+'</div></div></div>'
+    '<div class="activity-item" style="cursor:pointer;" onclick="openDeal('+d.id+')"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="act-text"><b>'+esc(d.company)+'</b></div><div class="act-time">'+fmtEur(d.amount)+' · '+esc(stageInfo(d.stage).name)+'</div></div></div>'
   ).join('') : '<div class="sd-empty">Geen deals gekoppeld.</div>';
 
   showView('contact-detail');
+  document.getElementById('cdTimeline').innerHTML = await fetchEntityTimeline('contact', uuidFor('contacts', id));
 }
-function addContactNote(){
+async function addContactNote(){
   const input = document.getElementById('cdNoteInput');
   if(!input.value.trim()) return;
-  const html = '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div><div class="act-text">'+input.value+'</div><div class="act-time">Zojuist toegevoegd</div></div></div>';
-  document.getElementById('cdTimeline').insertAdjacentHTML('afterbegin', html);
+  const body = input.value.trim();
+  const { error } = await sb.from('notes').insert({
+    org_id: currentOrg.id, entity_type: 'contact', entity_id: uuidFor('contacts', currentContactId),
+    body, created_by: currentUser.id
+  });
+  if(error){ showToast('Notitie opslaan mislukt: '+friendlyDbError(error)); return; }
+  document.getElementById('cdTimeline').innerHTML = await fetchEntityTimeline('contact', uuidFor('contacts', currentContactId));
   input.value='';
 }
 
@@ -1536,8 +1587,8 @@ function renderDealsList(){
   dealsPage = Math.min(dealsPage, totalPages);
   const pageItems = list.slice((dealsPage-1)*PAGE_SIZE, dealsPage*PAGE_SIZE);
   document.getElementById('dealsListBody').innerHTML = pageItems.map(d=>{
-    const c = contacts.find(x=>x.id===d.contactId);
-    return '<tr onclick="openDeal('+d.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials+'</div><div><div class="deal-co">'+d.company+'</div><div class="deal-contact">'+c.name+'</div></div></div></td><td>'+stagePillHTML(d.stage)+'</td><td class="amount">'+fmtEur(d.amount)+'</td><td class="prob">'+d.prob+'%</td><td class="prob">'+d.close+'</td></tr>';
+    const c = contacts.find(x=>x.id===d.contactId) || {color:'#8B9690', text:'#fff', initials:'—', name:'—'};
+    return '<tr onclick="openDeal('+d.id+')"><td><div class="deal-name"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+esc(c.initials)+'</div><div><div class="deal-co">'+esc(d.company)+'</div><div class="deal-contact">'+esc(c.name)+'</div></div></div></td><td>'+stagePillHTML(d.stage)+'</td><td class="amount">'+fmtEur(d.amount)+'</td><td class="prob">'+d.prob+'%</td><td class="prob">'+d.close+'</td></tr>';
   }).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--muted); padding:28px;">Geen deals gevonden.<br><button class="btn-secondary" style="margin-top:10px;" onclick=\"openFormModal(&#39;deal&#39;)\">+ Nieuwe deal toevoegen</button></td></tr>';
   renderPaginationBar('dealsPagination', list.length, dealsPage, 'gotoDealsPage');
 }
@@ -1550,12 +1601,12 @@ function renderKanban(){
     const inStage = deals.filter(d=>d.stage===s.id);
     const total = inStage.reduce((sum,d)=>sum+d.amount,0);
     return '<div class="kcol" data-stage="'+s.id+'" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event, \''+s.id+'\')">'+
-      '<div class="kcol-head"><span class="kcol-name">'+s.name+'</span><span class="pcol-count">'+inStage.length+'</span></div>'+
+      '<div class="kcol-head"><span class="kcol-name">'+esc(s.name)+'</span><span class="pcol-count">'+inStage.length+'</span></div>'+
       '<div class="kcol-total">'+fmtEur(total)+'</div>'+
       inStage.map(d=>{
-        const c = contacts.find(x=>x.id===d.contactId);
+        const c = contacts.find(x=>x.id===d.contactId) || {initials:'—'};
         return '<div class="kcard" id="kcard-'+d.id+'" draggable="true" ondragstart="onDragStart(event, '+d.id+')" ondragend="onDragEnd(event)" onclick="openDeal('+d.id+')">'+
-          '<div class="kname">'+d.company+'</div><div class="kamt">'+fmtEur(d.amount)+'</div>'+
+          '<div class="kname">'+esc(d.company)+'</div><div class="kamt">'+fmtEur(d.amount)+'</div>'+
           '<div class="kcard-foot"><div class="kcard-avatar">'+c.initials+'</div><div class="kcard-date">'+d.close+'</div></div></div>';
       }).join('') +
       '</div>';
@@ -1566,62 +1617,72 @@ function onDragStart(e, id){ dragDealId = id; e.dataTransfer.effectAllowed='move
 function onDragEnd(e){ e.currentTarget.classList.remove('dragging'); }
 function onDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('dragover'); }
 function onDragLeave(e){ e.currentTarget.classList.remove('dragover'); }
-function onDrop(e, stageId){
+async function onDrop(e, stageId){
   e.preventDefault();
   e.currentTarget.classList.remove('dragover');
   const deal = deals.find(d=>d.id===dragDealId);
   if(deal){
+    const prevStage = deal.stage;
     deal.stage = stageId;
     renderKanban(); renderDealsList(); renderDashboard();
-    persistCollection('deals');
-    showToast(deal.company+' verplaatst naar '+stageInfo(stageId).name);
     const landed = document.getElementById('kcard-'+deal.id);
     if(landed){ landed.classList.add('landed'); setTimeout(()=>landed.classList.remove('landed'), 350); }
+    const stageObj = stages.find(s=>s.id===stageId);
+    const { error } = await sb.from('deals').update({stage_id: stageObj ? stageObj._dbId : null}).eq('id', uuidFor('deals', deal.id));
+    if(error){
+      deal.stage = prevStage; renderKanban(); renderDealsList(); renderDashboard();
+      showToast('Verplaatsen mislukt: '+friendlyDbError(error));
+      return;
+    }
+    showToast(deal.company+' verplaatst naar '+stageInfo(stageId).name);
   }
 }
 
 /* ================= DEAL DETAIL ================= */
 function ddCurrentEmail(){ const d = deals.find(x=>x.id===currentDealId); if(!d) return ''; const c = contacts.find(x=>x.id===d.contactId); return c ? c.email : ''; }
-function openDeal(id){
+async function openDeal(id){
   currentDealId = id;
   const d = deals.find(x=>x.id===id);
-  const c = contacts.find(x=>x.id===d.contactId);
+  const c = contacts.find(x=>x.id===d.contactId) || {initials:'—', color:'#8B9690', text:'#fff', name:'Geen contact', company:'', email:'—', phone:'—', id:null};
   document.getElementById('ddLogo').textContent = c.initials;
   document.getElementById('ddLogo').style.background = 'linear-gradient(135deg,'+c.color+','+c.color+')';
   document.getElementById('ddName').textContent = d.company;
   document.getElementById('ddMeta').textContent = fmtEur(d.amount) + ' · sluit ' + d.close;
   document.getElementById('ddAmount').textContent = fmtEur(d.amount);
   document.getElementById('ddProb').textContent = d.prob + '%';
-  document.getElementById('ddCreated').textContent = '3 jul 2026';
-  document.getElementById('ddOwner').textContent = '—';
-  document.getElementById('ddBron').textContent = 'Website';
+  document.getElementById('ddCreated').textContent = d.createdAt || '—';
+  document.getElementById('ddOwner').textContent = (currentProfile && currentProfile.full_name) || '—';
+  document.getElementById('ddBron').textContent = '—';
   document.getElementById('ddAiSummary').innerHTML = generateDealSummary(d, c);
 
   const sel = document.getElementById('ddStageSelect');
-  sel.innerHTML = stages.map(s=>'<option value="'+s.id+'" '+(s.id===d.stage?'selected':'')+'>'+s.name+'</option>').join('');
+  sel.innerHTML = stages.map(s=>'<option value="'+s.id+'" '+(s.id===d.stage?'selected':'')+'>'+esc(s.name)+'</option>').join('');
 
-  document.getElementById('ddContactCard').innerHTML =
-    '<div class="deal-name" style="cursor:pointer; margin-bottom:12px;" onclick="openContact('+c.id+')"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+c.initials+'</div><div><div class="deal-co">'+c.name+'</div><div class="deal-contact">'+c.company+'</div></div></div>'+
-    '<div class="info-row" style="padding:0;"><span class="k">'+c.email+'</span></div>'+
-    '<div class="info-row" style="padding:6px 0 0;"><span class="k">'+c.phone+'</span></div>';
+  document.getElementById('ddContactCard').innerHTML = c.id ?
+    '<div class="deal-name" style="cursor:pointer; margin-bottom:12px;" onclick="openContact('+c.id+')"><div class="deal-logo" style="background:'+c.color+';color:'+c.text+';">'+esc(c.initials)+'</div><div><div class="deal-co">'+esc(c.name)+'</div><div class="deal-contact">'+esc(c.company)+'</div></div></div>'+
+    '<div class="info-row" style="padding:0;"><span class="k">'+esc(c.email)+'</span></div>'+
+    '<div class="info-row" style="padding:6px 0 0;"><span class="k">'+esc(c.phone)+'</span></div>'
+    : '<div class="sd-empty">Geen contact gekoppeld.</div>';
 
-  document.getElementById('ddTimeline').innerHTML =
-    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="act-text">Deal aangemaakt in fase <b>'+stageInfo(d.stage).name+'</b></div><div class="act-time">3 jul 2026</div></div></div>'+
-    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12H7l-3 3V4z"/></svg></div><div><div class="act-text">Laatste contactmoment met <b>'+c.name+'</b></div><div class="act-time">Recent</div></div></div>';
+  document.getElementById('ddTimeline').innerHTML = '<div class="sd-empty">Laden…</div>';
 
   const relTasks = tasks.filter(t=>t.tag===d.company || t.tag===c.company).slice(0,3);
   document.getElementById('ddTasks').innerHTML = relTasks.length ? relTasks.map(t=>
-    '<div class="task-item"><div class="task-check '+(t.done?'done':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div><div class="task-title">'+t.title+'</div></div>'
+    '<div class="task-item"><div class="task-check '+(t.done?'done':'')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div><div class="task-title">'+esc(t.title)+'</div></div>'
   ).join('') : '<div class="sd-empty">Geen taken gekoppeld.</div>';
 
   switchDealTab('overzicht');
   showView('deal-detail');
+  document.getElementById('ddTimeline').innerHTML = await fetchEntityTimeline('deal', uuidFor('deals', id));
 }
-function changeDealStage(){
+async function changeDealStage(){
   const d = deals.find(x=>x.id===currentDealId);
-  d.stage = document.getElementById('ddStageSelect').value;
+  const newStageKey = document.getElementById('ddStageSelect').value;
+  const stageObj = stages.find(s=>s.id===newStageKey);
+  const { error } = await sb.from('deals').update({stage_id: stageObj ? stageObj._dbId : null}).eq('id', uuidFor('deals', d.id));
+  if(error){ showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
+  d.stage = newStageKey;
   renderKanban(); renderDealsList(); renderDashboard();
-  persistCollection('deals');
   const c = contacts.find(x=>x.id===d.contactId);
   document.getElementById('ddAiSummary').innerHTML = generateDealSummary(d, c);
   showToast('Fase bijgewerkt naar ' + stageInfo(d.stage).name);
@@ -1632,11 +1693,16 @@ function switchDealTab(tab){
   document.getElementById('ddTabActiviteit').style.display = tab==='activiteit' ? 'block' : 'none';
   document.getElementById('ddTabBestanden').style.display = tab==='bestanden' ? 'block' : 'none';
 }
-function addDealNote(){
+async function addDealNote(){
   const input = document.getElementById('ddNoteInput');
   if(!input.value.trim()) return;
-  const html = '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div><div class="act-text">'+input.value+'</div><div class="act-time">Zojuist toegevoegd</div></div></div>';
-  document.getElementById('ddTimeline').insertAdjacentHTML('afterbegin', html);
+  const body = input.value.trim();
+  const { error } = await sb.from('notes').insert({
+    org_id: currentOrg.id, entity_type: 'deal', entity_id: uuidFor('deals', currentDealId),
+    body, created_by: currentUser.id
+  });
+  if(error){ showToast('Notitie opslaan mislukt: '+friendlyDbError(error)); return; }
+  document.getElementById('ddTimeline').innerHTML = await fetchEntityTimeline('deal', uuidFor('deals', currentDealId));
   input.value='';
 }
 
@@ -1656,8 +1722,8 @@ function renderTasks(){
     '<div class="task-item '+(t.done?'done':'')+'">'+
       '<div class="task-check '+(t.done?'done':'')+'" onclick="toggleTask('+t.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>'+
       '<span class="prio-dot" style="background:'+prioColor[t.prio]+';"></span>'+
-      '<div class="task-title">'+t.title+'</div>'+
-      '<span class="task-tag">'+t.tag+'</span>'+
+      '<div class="task-title">'+esc(t.title)+'</div>'+
+      '<span class="task-tag">'+esc(t.tag)+'</span>'+
       '<div class="task-due">'+t.due+'</div>'+
       '<button class="modal-close" style="width:22px; height:22px; flex-shrink:0;" onclick="deleteTask('+t.id+')" title="Verwijderen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'+
     '</div>'
@@ -1665,26 +1731,33 @@ function renderTasks(){
   document.getElementById('tasksCount').textContent = tasks.filter(t=>!t.done).length + ' openstaande taken';
   document.getElementById('navCountTasks').textContent = tasks.filter(t=>!t.done).length;
 }
-function toggleTask(id){
+async function toggleTask(id){
   const t = tasks.find(x=>x.id===id);
+  const prev = t.done;
   t.done = !t.done;
   renderTasks();
-  persistCollection('tasks');
+  const { error } = await sb.from('tasks').update({done: t.done}).eq('id', uuidFor('tasks', id));
+  if(error){ t.done = prev; renderTasks(); showToast('Bijwerken mislukt: '+friendlyDbError(error)); }
 }
-function deleteTask(id){
+async function deleteTask(id){
+  const { error } = await sb.from('tasks').delete().eq('id', uuidFor('tasks', id));
+  if(error){ showToast('Verwijderen mislukt: '+friendlyDbError(error)); return; }
   tasks = tasks.filter(t=>t.id!==id);
   renderTasks();
-  persistCollection('tasks');
   showToast('Taak verwijderd');
 }
-function addTask(){
+async function addTask(){
   const input = document.getElementById('newTaskInput');
   if(!input.value.trim()) return;
   const prio = document.getElementById('newTaskPrio').value;
-  tasks.unshift({id:Date.now(), title:input.value, due:'—', prio:prio, done:false, tag:'Nieuw'});
+  const title = input.value.trim();
+  const { data, error } = await sb.from('tasks').insert({
+    org_id: currentOrg.id, title, priority: prio, tag: 'Nieuw', done: false, created_by: currentUser.id
+  }).select().single();
+  if(error){ showToast('Aanmaken mislukt: '+friendlyDbError(error)); return; }
+  tasks.unshift(taskFromRow(data));
   input.value='';
   renderTasks();
-  persistCollection('tasks');
   showToast('Taak toegevoegd');
 }
 
@@ -1793,29 +1866,45 @@ function switchSettingsTab(tab){
 }
 function renderStageEditor(){
   document.getElementById('stageEditList').innerHTML = stages.map((s,i)=>
-    '<div class="stage-edit-row"><span class="d" style="background:'+s.color+';"></span><input type="text" value="'+s.name+'" onchange="renameStage('+i+',this.value)"><button class="rm" onclick="removeStage('+i+')">✕</button></div>'
+    '<div class="stage-edit-row"><span class="d" style="background:'+s.color+';"></span><input type="text" value="'+escAttr(s.name)+'" onchange="renameStage('+i+',this.value)"><button class="rm" onclick="removeStage('+i+')">✕</button></div>'
   ).join('');
 }
-function renameStage(i, val){ stages[i].name = val; renderKanban(); renderDashboard(); renderDealsList(); persistCollection('stages'); }
-function removeStage(i){
+async function renameStage(i, val){
+  const prev = stages[i].name;
+  stages[i].name = val;
+  renderKanban(); renderDashboard(); renderDealsList();
+  const { error } = await sb.from('stages').update({name: val}).eq('id', stages[i]._dbId);
+  if(error){ stages[i].name = prev; renderKanban(); renderDashboard(); renderDealsList(); renderStageEditor(); showToast('Bijwerken mislukt: '+friendlyDbError(error)); }
+}
+async function removeStage(i){
   if(stages.length<=2){ showToast('Je hebt minimaal 2 fases nodig'); return; }
   const dealsInStage = deals.filter(d=>d.stage===stages[i].id).length;
   const warning = dealsInStage>0
     ? 'Fase "'+stages[i].name+'" verwijderen? Er staan nog '+dealsInStage+' deal(s) in — die blijven bestaan maar tonen straks een onbekende fase.'
     : 'Fase "'+stages[i].name+'" verwijderen? Dit kan niet ongedaan worden gemaakt.';
   if(!confirm(warning)) return;
+  const { error } = await sb.from('stages').delete().eq('id', stages[i]._dbId);
+  if(error){ showToast('Verwijderen mislukt: '+friendlyDbError(error)); return; }
   stages.splice(i,1);
+  rebuildStagesIndex();
+  deals.forEach(d=>{ if(!stages.find(s=>s.id===d.stage)) d.stage = ''; });
   renderStageEditor(); renderKanban(); renderDashboard(); renderDealsList();
-  persistCollection('stages');
   showToast('Fase verwijderd');
 }
-function addStage(){
+async function addStage(){
   const input = document.getElementById('newStageInput');
   if(!input.value.trim()) return;
-  stages.splice(stages.length-1, 0, {id:'stage'+Date.now(), name:input.value, color:'var(--blue)'});
+  const name = input.value.trim();
+  const key = 'stage_' + name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,30) + '_' + Date.now().toString(36);
+  const position = stages.length>0 ? stages.length-1 : 0;
+  const { data, error } = await sb.from('stages').insert({
+    org_id: currentOrg.id, key, name, color:'#3D5A8C', position
+  }).select().single();
+  if(error){ showToast('Aanmaken mislukt: '+friendlyDbError(error)); return; }
+  stages.splice(stages.length-1, 0, stageFromRow(data));
+  rebuildStagesIndex();
   input.value='';
   renderStageEditor(); renderKanban(); renderDashboard(); renderDealsList();
-  persistCollection('stages');
 }
 
 /* ================= GLOBAL SEARCH ================= */
@@ -1829,15 +1918,15 @@ searchInput.addEventListener('input', ()=>{
   let html = '';
   if(cMatches.length){
     html += '<div class="sd-label">Contacten</div>' + cMatches.map(c=>
-      '<div class="sd-item" onclick="searchGo(()=>openContact('+c.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div><div><div class="sd-title">'+c.name+'</div><div class="sd-sub">'+c.company+'</div></div></div>'
+      '<div class="sd-item" onclick="searchGo(()=>openContact('+c.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div><div><div class="sd-title">'+esc(c.name)+'</div><div class="sd-sub">'+esc(c.company)+'</div></div></div>'
     ).join('');
   }
   if(dMatches.length){
     html += '<div class="sd-label">Deals</div>' + dMatches.map(d=>
-      '<div class="sd-item" onclick="searchGo(()=>openDeal('+d.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="sd-title">'+d.company+'</div><div class="sd-sub">'+fmtEur(d.amount)+'</div></div></div>'
+      '<div class="sd-item" onclick="searchGo(()=>openDeal('+d.id+'))"><div class="sd-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z"/></svg></div><div><div class="sd-title">'+esc(d.company)+'</div><div class="sd-sub">'+fmtEur(d.amount)+'</div></div></div>'
     ).join('');
   }
-  if(!cMatches.length && !dMatches.length) html = '<div class="sd-empty">Geen resultaten voor "'+searchInput.value+'"</div>';
+  if(!cMatches.length && !dMatches.length) html = '<div class="sd-empty">Geen resultaten voor "'+esc(searchInput.value)+'"</div>';
   searchDropdown.innerHTML = html;
   searchDropdown.classList.add('show');
 });
@@ -1918,16 +2007,16 @@ function renderCmdkResults(query){
   cmdkSelected = 0;
   const resultsEl = document.getElementById('cmdkResults');
   if(!results.length){
-    resultsEl.innerHTML = '<div class="cmdk-empty">Geen resultaten voor "'+query+'"</div>';
+    resultsEl.innerHTML = '<div class="cmdk-empty">Geen resultaten voor "'+esc(query)+'"</div>';
     return;
   }
   let lastGroup = null;
   let html = '';
   results.forEach((item, i)=>{
-    if(item.group !== lastGroup){ html += '<div class="cmdk-group-label">'+item.group+'</div>'; lastGroup = item.group; }
+    if(item.group !== lastGroup){ html += '<div class="cmdk-group-label">'+esc(item.group)+'</div>'; lastGroup = item.group; }
     html += '<div class="cmdk-item '+(i===0?'selected':'')+'" data-idx="'+i+'" onclick="execCmdkItem('+i+')" onmouseenter="cmdkHover('+i+')">'+
       '<div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+cmdkIcons[item.icon]+'</svg></div>'+
-      '<div><div class="ci-title">'+item.title+'</div><div class="ci-sub">'+(item.sub||'')+'</div></div>'+
+      '<div><div class="ci-title">'+esc(item.title)+'</div><div class="ci-sub">'+esc(item.sub||'')+'</div></div>'+
       '<div class="ci-enter">↵</div>'+
     '</div>';
   });
@@ -2009,7 +2098,7 @@ function buildContactForm(editId){
   '</div>'+
   '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteContact('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitContactForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Contact toevoegen')+'</button></div>';
 }
-function submitContactForm(editId){
+async function submitContactForm(editId){
   const name = document.getElementById('ncName');
   const company = document.getElementById('ncCompany');
   const email = document.getElementById('ncEmail');
@@ -2020,37 +2109,39 @@ function submitContactForm(editId){
   ok = emailOk && ok;
   if(!ok) return;
 
-  const phone = document.getElementById('ncPhone').value.trim() || '—';
-  const role = document.getElementById('ncRole').value.trim() || '—';
+  const phone = document.getElementById('ncPhone').value.trim() || null;
+  const job_title = document.getElementById('ncRole').value.trim() || '';
   const tag = document.getElementById('ncTag').value;
+  const payload = {
+    name: name.value.trim(), company: company.value.trim(), email: email.value.trim(),
+    phone, job_title, tag
+  };
 
   if(editId){
-    const rec = contacts.find(c=>c.id===editId);
-    rec.name = name.value.trim(); rec.company = company.value.trim(); rec.email = email.value.trim();
-    rec.phone = phone; rec.role = role; rec.tag = tag; rec.initials = computeInitials(rec.name);
-    closeFormModal(); renderContacts(); persistCollection('contacts');
+    const uuid = uuidFor('contacts', editId);
+    const { data, error } = await sb.from('contacts').update(payload).eq('id', uuid).select().single();
+    if(error){ showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
+    const idx = contacts.findIndex(c=>c.id===editId);
+    contacts[idx] = contactFromRow(data);
+    closeFormModal(); renderContacts();
     showToast('Contact bijgewerkt');
     openContact(editId);
     return;
   }
-  const palette = [
-    {bg:'#2A4A3B', text:'#8FE3B3'}, {bg:'#2E3D5A', text:'#9DB4EA'}, {bg:'#3D2A3F', text:'#D9A9E0'}
-  ];
-  const p = palette[contacts.length % palette.length];
-  const newContact = {
-    id: Date.now(), name:name.value.trim(), company:company.value.trim(), email:email.value.trim(),
-    phone:phone, tag:tag, last:'Nog geen contact', initials:computeInitials(name.value),
-    color:p.bg, text:p.text, role:role, since:'aug 2026'
-  };
-  contacts.push(newContact);
+
+  payload.org_id = currentOrg.id;
+  payload.created_by = currentUser.id;
+  const { data, error } = await sb.from('contacts').insert(payload).select().single();
+  if(error){ showToast('Aanmaken mislukt: '+friendlyDbError(error)); return; }
+  const newContact = contactFromRow(data);
+  contacts.unshift(newContact);
   closeFormModal();
   renderContacts();
   document.getElementById('navCountContacts').textContent = contacts.length;
-  persistCollection('contacts');
   showToast('Contact "'+newContact.name+'" toegevoegd');
   openContact(newContact.id);
 }
-function deleteContact(id){
+async function deleteContact(id){
   const rec = contacts.find(c=>c.id===id);
   if(!rec) return;
   const linkedDeals = deals.filter(d=>d.contactId===id).length;
@@ -2058,11 +2149,14 @@ function deleteContact(id){
     ? 'Contact "'+rec.name+'" verwijderen? Er zijn nog '+linkedDeals+' gekoppelde deal(s) — die blijven bestaan maar tonen straks geen contactgegevens meer.'
     : 'Contact "'+rec.name+'" verwijderen? Dit kan niet ongedaan worden gemaakt.';
   if(!confirm(msg)) return;
+  const uuid = uuidFor('contacts', id);
+  const { error } = await sb.from('contacts').delete().eq('id', uuid);
+  if(error){ showToast('Verwijderen mislukt: '+friendlyDbError(error)); return; }
   contacts.splice(contacts.findIndex(c=>c.id===id), 1);
+  deals.forEach(d=>{ if(d.contactId===id) d.contactId = null; });
   closeFormModal();
   renderContacts();
   document.getElementById('navCountContacts').textContent = contacts.length;
-  persistCollection('contacts');
   showToast('Contact verwijderd');
   showView('contacts');
 }
@@ -2085,7 +2179,7 @@ function buildDealForm(editId){
   '</div>'+
   '<div class="modal-foot">'+(rec?'<button class="btn-secondary" style="color:var(--coral); border-color:var(--coral);" onclick="deleteDeal('+rec.id+')">Verwijderen</button>':'')+'<button class="btn-secondary" onclick="closeFormModal()">Annuleren</button><button class="btn-primary" onclick="submitDealForm('+(rec?rec.id:'null')+')">'+(rec?'Wijzigingen opslaan':'Deal toevoegen')+'</button></div>';
 }
-function submitDealForm(editId){
+async function submitDealForm(editId){
   const name = document.getElementById('ndName');
   const amountEl = document.getElementById('ndAmount');
   let ok = validateField(name, 'Vul een naam in');
@@ -2093,39 +2187,53 @@ function submitDealForm(editId){
   if(!amountEl.value.trim() || isNaN(amountNum) || amountNum<=0){ setFieldError(amountEl, 'Vul een geldig bedrag in'); ok = false; } else clearFieldError(amountEl);
   if(!ok) return;
 
-  const contactId = parseInt(document.getElementById('ndContact').value);
-  const closeDateRaw = document.getElementById('ndClose').value;
-  const closeLabel = closeDateRaw ? new Date(closeDateRaw).toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'}) : (editId ? deals.find(d=>d.id===editId).close : 'nog niet bepaald');
+  const contactLocalId = parseInt(document.getElementById('ndContact').value) || null;
+  const closeDateRaw = document.getElementById('ndClose').value || null;
   const prob = parseInt(document.getElementById('ndProb').value) || 20;
-  const stage = document.getElementById('ndStage').value;
+  const stageKey = document.getElementById('ndStage').value;
+  const stageObj = stages.find(s=>s.id===stageKey);
+  const payload = {
+    company: name.value.trim(),
+    contact_id: contactLocalId ? uuidFor('contacts', contactLocalId) : null,
+    amount: Math.round(amountNum), probability: prob,
+    expected_close: closeDateRaw, stage_id: stageObj ? stageObj._dbId : null
+  };
 
   if(editId){
-    const rec = deals.find(d=>d.id===editId);
-    rec.company = name.value.trim(); rec.contactId = contactId; rec.amount = Math.round(amountNum);
-    rec.stage = stage; rec.prob = prob; rec.close = closeLabel;
-    closeFormModal(); renderDealsList(); renderKanban(); renderDashboard(); persistCollection('deals');
+    const uuid = uuidFor('deals', editId);
+    const { data, error } = await sb.from('deals').update(payload).eq('id', uuid).select().single();
+    if(error){ showToast('Bijwerken mislukt: '+friendlyDbError(error)); return; }
+    const idx = deals.findIndex(d=>d.id===editId);
+    deals[idx] = dealFromRow(data);
+    closeFormModal(); renderDealsList(); renderKanban(); renderDashboard();
     showToast('Deal bijgewerkt');
     openDeal(editId);
     return;
   }
-  const newDeal = { id:Date.now(), company:name.value.trim(), contactId:contactId, stage:stage, amount:Math.round(amountNum), prob:prob, close:closeLabel };
-  deals.push(newDeal);
+  payload.org_id = currentOrg.id;
+  payload.created_by = currentUser.id;
+  payload.owner_id = currentUser.id;
+  const { data, error } = await sb.from('deals').insert(payload).select().single();
+  if(error){ showToast('Aanmaken mislukt: '+friendlyDbError(error)); return; }
+  const newDeal = dealFromRow(data);
+  deals.unshift(newDeal);
   closeFormModal();
   renderDealsList(); renderKanban(); renderDashboard();
   document.getElementById('navCountDeals').textContent = deals.length;
-  persistCollection('deals');
   showToast('Deal "'+newDeal.company+'" toegevoegd');
   openDeal(newDeal.id);
 }
-function deleteDeal(id){
+async function deleteDeal(id){
   const rec = deals.find(d=>d.id===id);
   if(!rec) return;
   if(!confirm('Deal "'+rec.company+'" verwijderen? Dit kan niet ongedaan worden gemaakt.')) return;
+  const uuid = uuidFor('deals', id);
+  const { error } = await sb.from('deals').delete().eq('id', uuid);
+  if(error){ showToast('Verwijderen mislukt: '+friendlyDbError(error)); return; }
   deals.splice(deals.findIndex(d=>d.id===id), 1);
   closeFormModal();
   renderDealsList(); renderKanban(); renderDashboard();
   document.getElementById('navCountDeals').textContent = deals.length;
-  persistCollection('deals');
   showToast('Deal verwijderd');
   showView('pipeline');
 }
@@ -2282,12 +2390,13 @@ function generateDealSummary(d, c){
 /* ================= NOTIFICATIONS ================= */
 function toggleNotif(e){
   e.stopPropagation();
+  const willShow = !document.getElementById('notifDropdown').classList.contains('show');
   document.getElementById('notifDropdown').classList.toggle('show');
+  if(willShow) fetchAndRenderNotifications();
 }
-function markAllRead(e){
+async function markAllRead(e){
   e.stopPropagation();
-  document.getElementById('notifDot').style.display = 'none';
-  document.querySelectorAll('#notifList .activity-item').forEach(el=> el.style.opacity = '.5');
+  await markAllNotificationsRead();
   showToast('Alle meldingen gemarkeerd als gelezen');
 }
 function toggleProfileMenu(e){
@@ -2633,45 +2742,270 @@ function renderDataCheck(){
 function resolveIssue(id){ issues = issues.filter(i=>i.id!==id); renderDataCheck(); showToast('Aandachtspunt opgelost'); }
 function dismissIssue(id){ issues = issues.filter(i=>i.id!==id); renderDataCheck(); showToast('Aandachtspunt genegeerd'); }
 
-/* ================= PERSISTENCE (window.storage, with graceful fallback) ================= */
-const STORAGE_AVAILABLE = typeof window.storage !== 'undefined' && typeof window.storage.set === 'function';
-function collectionRef(key){
-  return {contacts, deals, invoices, contracts, tasks, expenses, stages}[key];
-}
-async function persistCollection(key){
-  if(!STORAGE_AVAILABLE) return;
-  const data = collectionRef(key);
-  if(!data) return;
-  try{
-    await window.storage.set('nextcrm:'+key, JSON.stringify(data), false);
-  } catch(err){
-    console.error('NextCRM: opslaan mislukt voor', key, err);
-  }
-}
-async function loadCollection(key){
-  const target = collectionRef(key);
-  if(!STORAGE_AVAILABLE || !target) return;
-  try{
-    const res = await window.storage.get('nextcrm:'+key, false);
-    if(res && res.value){
-      const parsed = JSON.parse(res.value);
-      if(Array.isArray(parsed) && parsed.length){
-        target.length = 0;
-        parsed.forEach(item => target.push(item));
-      }
-    }
-  } catch(err){
-    // key not found yet (first run) — keep the built-in demo data
-  }
-}
-async function loadAllCollections(){
-  if(!STORAGE_AVAILABLE) return;
-  await Promise.all(['contacts','deals','invoices','contracts','tasks','expenses','stages'].map(loadCollection));
+/* ================= SUPABASE BACKEND ================= */
+const SUPABASE_URL = 'https://ctdhwfgluenxlmytlqkb.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_svpDVf59J5hnvDSiocFJHw_1cT20L3I';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function esc(s){
+  return (s===undefined||s===null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-/* ================= INIT ================= */
+// invoices/contracts/expenses have no backend table yet (out of this pass's
+// scope) — they stay in-memory only, exactly as before. Kept as a no-op
+// shim so those call sites don't need touching.
+async function persistCollection(){ /* real writes for contacts/deals/tasks/stages happen inline where they occur */ }
+
+/* ---- local <-> DB id mapping (DB uses uuid primary keys; the existing UI
+   wires onclick="openContact(123)" etc. as bare, unquoted numbers, so we
+   keep that contract intact with a client-side integer alias). ---- */
+let _nextLocalId = 1;
+const _idMaps = { contacts:{toUuid:{}, toLocal:{}}, deals:{toUuid:{}, toLocal:{}}, tasks:{toUuid:{}, toLocal:{}}, leads:{toUuid:{}, toLocal:{}} };
+function localIdFor(kind, uuid){
+  const m = _idMaps[kind];
+  if(m.toLocal[uuid]) return m.toLocal[uuid];
+  const id = _nextLocalId++;
+  m.toLocal[uuid] = id; m.toUuid[id] = uuid;
+  return id;
+}
+function uuidFor(kind, localId){ return _idMaps[kind].toUuid[localId]; }
+
+const AVATAR_PALETTE = [
+  {bg:'#2A4A3B', text:'#8FE3B3'}, {bg:'#2E3D5A', text:'#9DB4EA'}, {bg:'#3D2A3F', text:'#D9A9E0'},
+  {bg:'#4A3B2A', text:'#E3C48F'}, {bg:'#2A3D3D', text:'#8FE3D9'}, {bg:'#3D2A2A', text:'#E39A8F'}
+];
+function paletteFor(uuid){
+  let hash = 0; const s = String(uuid);
+  for(let i=0;i<s.length;i++) hash = (hash*31 + s.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
+}
+function fmtDateNL(d){
+  if(!d) return '—';
+  const dt = new Date(d+'T00:00:00');
+  if(isNaN(dt)) return '—';
+  return dt.toLocaleDateString('nl-NL', {day:'numeric', month:'short', year:'numeric'});
+}
+function fmtSinceNL(iso){
+  if(!iso) return '—';
+  return new Date(iso).toLocaleDateString('nl-NL', {month:'short', year:'numeric'});
+}
+
+let stagesByDbId = {};
+function rebuildStagesIndex(){ stagesByDbId = {}; stages.forEach(s=>{ stagesByDbId[s._dbId] = s; }); }
+
+function stageFromRow(row){ return { id: row.key, name: row.name, color: row.color, _dbId: row.id, _position: row.position }; }
+function contactFromRow(row){
+  const p = paletteFor(row.id);
+  return {
+    id: localIdFor('contacts', row.id), name: row.name, company: row.company||'', email: row.email||'',
+    phone: row.phone||'', tag: row.tag, role: row.job_title||'—', since: fmtSinceNL(row.created_at),
+    last: row.last_contact_at ? fmtSinceNL(row.last_contact_at) : 'Nog geen contact',
+    initials: computeInitials(row.name), color: p.bg, text: p.text
+  };
+}
+function dealFromRow(row){
+  const stage = stagesByDbId[row.stage_id];
+  return {
+    id: localIdFor('deals', row.id), company: row.company,
+    contactId: row.contact_id ? localIdFor('contacts', row.contact_id) : null,
+    amount: Number(row.amount), stage: stage ? stage.id : (stages[0] ? stages[0].id : ''),
+    prob: row.probability, close: fmtDateNL(row.expected_close), createdAt: fmtDateNL(row.created_at ? row.created_at.slice(0,10) : null)
+  };
+}
+function taskFromRow(row){
+  return {
+    id: localIdFor('tasks', row.id), title: row.title, due: row.due_date ? fmtDateNL(row.due_date) : '—',
+    prio: row.priority, done: row.done, tag: row.tag||''
+  };
+}
+
+function friendlyDbError(err){
+  if(!err) return 'Er ging iets mis. Probeer het opnieuw.';
+  if(err.code === '23505') return 'Dit bestaat al.';
+  if(err.code === '23514' || err.code === '23502') return 'Vul alle verplichte velden correct in.';
+  return err.message || 'Er ging iets mis. Probeer het opnieuw.';
+}
+
+/* ================= SESSION / ORG STATE ================= */
+let currentUser = null, currentProfile = null, currentOrg = null, currentMembership = null;
+
+function getInviteTokenFromUrl(){ return new URLSearchParams(window.location.search).get('invite'); }
+
+function switchAuthTab(tab){
+  document.getElementById('authTabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('authTabSignup').classList.toggle('active', tab==='signup');
+  document.getElementById('loginForm').classList.toggle('active', tab==='login');
+  document.getElementById('signupForm').classList.toggle('active', tab==='signup');
+  document.getElementById('authSwitchLogin').style.display = tab==='login' ? 'none':'block';
+  document.getElementById('authSwitchSignup').style.display = tab==='signup' ? 'none':'block';
+}
+function showAuthError(msg){
+  document.getElementById('authError').textContent = msg;
+  document.getElementById('authError').classList.add('show');
+  document.getElementById('authHint').classList.remove('show');
+}
+function showAuthHint(msg){
+  document.getElementById('authHint').textContent = msg;
+  document.getElementById('authHint').classList.add('show');
+  document.getElementById('authError').classList.remove('show');
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Bezig…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Inloggen';
+  if(error){ showAuthError(error.message === 'Invalid login credentials' ? 'E-mailadres of wachtwoord onjuist.' : error.message); }
+  return false;
+}
+async function handleSignup(e){
+  e.preventDefault();
+  const full_name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const org_name = document.getElementById('signupOrgName').value.trim();
+  const invite_token = getInviteTokenFromUrl();
+  const meta = { full_name };
+  if(invite_token) meta.invite_token = invite_token; else if(org_name) meta.org_name = org_name;
+  const btn = document.getElementById('signupSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Bezig…';
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: meta } });
+  btn.disabled = false; btn.textContent = 'Account aanmaken';
+  if(error){ showAuthError(error.message); return false; }
+  if(!data.session){
+    showAuthHint('Check je e-mail om je account te bevestigen en log daarna in.');
+    switchAuthTab('login');
+  }
+  return false;
+}
+async function handleLogout(){ await sb.auth.signOut(); }
+
+async function applyInvitePreview(){
+  const token = getInviteTokenFromUrl();
+  if(!token) return;
+  try{
+    const { data } = await sb.rpc('preview_invite', { p_token: token });
+    const row = Array.isArray(data) ? data[0] : data;
+    if(row && row.valid){
+      switchAuthTab('signup');
+      const orgRow = document.getElementById('signupOrgRow');
+      if(orgRow) orgRow.style.display = 'none';
+      showAuthHint('Je accepteert een uitnodiging voor "'+esc(row.org_name)+'".');
+    }
+  } catch(err){ /* ignore invalid token, just show normal signup */ }
+}
+
+/* ================= DATA LOADING ================= */
+async function loadOrgContext(){
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+  currentProfile = profile;
+  const { data: memberships, error } = await sb.from('memberships')
+    .select('id, role, organizations(id, name)').eq('user_id', currentUser.id).order('created_at').limit(1);
+  if(error || !memberships || !memberships.length) throw new Error('Geen organisatie gevonden voor dit account.');
+  currentOrg = memberships[0].organizations;
+  currentMembership = { id: memberships[0].id, role: memberships[0].role };
+}
+
+async function loadAllData(){
+  const [stagesRes, contactsRes, dealsRes, tasksRes] = await Promise.all([
+    sb.from('stages').select('*').order('position'),
+    sb.from('contacts').select('*').order('created_at', {ascending:false}),
+    sb.from('deals').select('*').order('created_at', {ascending:false}),
+    sb.from('tasks').select('*').order('created_at', {ascending:false}),
+  ]);
+  stages.length = 0; (stagesRes.data||[]).forEach(r=>stages.push(stageFromRow(r)));
+  rebuildStagesIndex();
+  contacts.length = 0; (contactsRes.data||[]).forEach(r=>contacts.push(contactFromRow(r)));
+  deals.length = 0; (dealsRes.data||[]).forEach(r=>deals.push(dealFromRow(r)));
+  tasks.length = 0; (tasksRes.data||[]).forEach(r=>tasks.push(taskFromRow(r)));
+}
+
+function updateProfileChrome(){
+  document.getElementById('profileOrgName').textContent = currentOrg ? currentOrg.name : '—';
+  const roleLabel = {owner:'Eigenaar', admin:'Beheerder', member:'Lid'}[currentMembership && currentMembership.role] || 'Team-omgeving';
+  document.getElementById('profileUserName').textContent = (currentProfile && currentProfile.full_name) ? currentProfile.full_name + ' · ' + roleLabel : roleLabel;
+  document.getElementById('profileAvatar').textContent = computeInitials(currentOrg ? currentOrg.name : 'NC');
+  const orgNameInput = document.getElementById('orgNameInput');
+  if(orgNameInput) orgNameInput.value = currentOrg ? currentOrg.name : '';
+}
+async function saveOrgProfile(){
+  const name = document.getElementById('orgNameInput').value.trim();
+  if(!name){ showToast('Bedrijfsnaam mag niet leeg zijn'); return; }
+  const { data, error } = await sb.from('organizations').update({name}).eq('id', currentOrg.id).select().single();
+  if(error){ showToast('Opslaan mislukt: '+friendlyDbError(error)); return; }
+  currentOrg = data;
+  updateProfileChrome();
+  showToast('Bedrijfsprofiel opgeslagen');
+}
+
+/* ================= NOTIFICATIONS (real) ================= */
+async function fetchAndRenderNotifications(){
+  const { data } = await sb.from('notifications').select('*').order('created_at', {ascending:false}).limit(20);
+  const list = data || [];
+  const unread = list.filter(n=>!n.read_at).length;
+  const dot = document.getElementById('notifDot');
+  if(dot) dot.style.display = unread ? 'block' : 'none';
+  const el = document.getElementById('notifList');
+  if(!el) return;
+  el.innerHTML = list.length ? list.map(n=>
+    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div><div><div class="act-text"><b>'+esc(n.title)+'</b> '+esc(n.body)+'</div><div class="act-time">'+new Date(n.created_at).toLocaleString('nl-NL')+'</div></div></div>'
+  ).join('') : '<div class="sd-empty" style="padding:20px;">Geen meldingen</div>';
+}
+async function markAllNotificationsRead(){
+  await sb.from('notifications').update({read_at: new Date().toISOString()}).is('read_at', null);
+  fetchAndRenderNotifications();
+}
+
+/* ================= TEAM (real memberships) ================= */
+async function fetchAndRenderTeam(){
+  const { data } = await sb.from('memberships').select('id, role, profiles(id, full_name, avatar_color)').order('created_at');
+  const el = document.getElementById('teamGrid');
+  if(!el) return;
+  const rows = data || [];
+  document.querySelector('#view-team .page-sub').textContent = rows.length + ' teamleden';
+  const roleLabel = {owner:'Eigenaar', admin:'Beheerder', member:'Lid'};
+  el.innerHTML = rows.map(m=>{
+    const p = m.profiles || {full_name:'—', avatar_color:'#1F4D3A'};
+    return '<div class="team-card"><div class="team-top"><div class="team-avatar" style="background:'+esc(p.avatar_color)+';">'+esc(computeInitials(p.full_name||'?'))+'</div><div><div class="team-name">'+esc(p.full_name||'—')+'</div><div class="team-role">'+esc(roleLabel[m.role]||m.role)+'</div></div></div></div>';
+  }).join('') || '<div class="sd-empty">Nog geen teamleden.</div>';
+}
+async function inviteTeammate(){
+  if(!currentMembership || (currentMembership.role !== 'owner' && currentMembership.role !== 'admin')){
+    showToast('Alleen eigenaren en beheerders kunnen teamleden uitnodigen');
+    return;
+  }
+  const email = prompt('E-mailadres van het nieuwe teamlid:');
+  if(!email || !email.trim()) return;
+  const { data, error } = await sb.from('invites').insert({
+    org_id: currentOrg.id, email: email.trim(), role: 'member', invited_by: currentUser.id
+  }).select().single();
+  if(error){ showToast('Uitnodigen mislukt: '+friendlyDbError(error)); return; }
+  const link = window.location.origin + window.location.pathname + '?invite=' + data.token;
+  prompt('Uitnodigingslink (geldig 14 dagen) — kopieer en deel deze met '+email.trim()+':', link);
+  showToast('Uitnodiging aangemaakt voor '+email.trim());
+}
+
+/* ================= NOTES + ACTIVITY (real, per contact/deal) ================= */
+async function fetchEntityTimeline(entityType, entityUuid){
+  const [{data: notes}, {data: activities}] = await Promise.all([
+    sb.from('notes').select('*').eq('entity_type', entityType).eq('entity_id', entityUuid).order('created_at', {ascending:false}),
+    sb.from('activities').select('*').eq('entity_type', entityType).eq('entity_id', entityUuid).order('created_at', {ascending:false}).limit(15),
+  ]);
+  const items = [
+    ...(notes||[]).map(n=>({ts:n.created_at, html:'<div class="act-text">'+esc(n.body)+'</div>'})),
+    ...(activities||[]).map(a=>({ts:a.created_at, html:'<div class="act-text">'+esc(a.message)+'</div>'})),
+  ].sort((a,b)=> new Date(b.ts) - new Date(a.ts));
+  return items.map(it=>
+    '<div class="activity-item"><div class="act-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div>'+it.html+'<div class="act-time">'+new Date(it.ts).toLocaleString('nl-NL')+'</div></div></div>'
+  ).join('') || '<div class="sd-empty">Nog geen activiteit.</div>';
+}
+
+/* ================= APP BOOTSTRAP ================= */
 async function initAll(){
-  await loadAllCollections();
+  await loadAllData();
   renderDashboard();
   renderContacts();
   renderDealsList();
@@ -2679,7 +3013,6 @@ async function initAll(){
   renderTasks();
   renderCalendar();
   renderReports();
-  renderTeam();
   renderInvoices();
   renderContracts();
   renderExpenses();
@@ -2687,9 +3020,43 @@ async function initAll(){
   renderDataCheck();
   document.getElementById('navCountContacts').textContent = contacts.length;
   document.getElementById('navCountDeals').textContent = deals.length;
+  fetchAndRenderTeam();
+  fetchAndRenderNotifications();
+  updateProfileChrome();
   runEntranceAnimations(document.getElementById('view-dashboard'), 'dashboard');
 }
-initAll();
+
+async function showApp(){
+  document.getElementById('authLoading').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appRoot').style.display = 'flex';
+  try{
+    await loadOrgContext();
+    await initAll();
+  } catch(err){
+    console.error(err);
+    showToast('Kon organisatie niet laden: ' + friendlyDbError(err));
+  }
+}
+function showAuth(){
+  document.getElementById('authLoading').style.display = 'none';
+  document.getElementById('appRoot').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+  applyInvitePreview();
+}
+
+// supabase-js fires this immediately on subscribe with the current session
+// (event === 'INITIAL_SESSION'), so this alone drives both first load and
+// every later sign-in/sign-out — no separate bootstrap call needed.
+let _appShown = false;
+sb.auth.onAuthStateChange((event, session) => {
+  currentUser = session ? session.user : null;
+  if(currentUser){
+    if(event !== 'TOKEN_REFRESHED' || !_appShown){ _appShown = true; showApp(); }
+  } else {
+    _appShown = false; showAuth();
+  }
+});
 </script>
 </body>
 </html>
